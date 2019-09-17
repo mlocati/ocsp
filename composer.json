@@ -1,0 +1,58 @@
+{
+    "name": "mlocati/ocsp",
+    "description": "Library to query HTTPS Certificates revocation status using the Online Certificate Status Protocol (OCSP)",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Michele Locati",
+            "email": "michele@locati.it",
+            "homepage" : "https://mlocati.github.io",
+            "role" : "Author"
+        }
+    ],
+    "homepage": "https://github.com/mlocati/ocsp/",
+    "support": {
+	    "issues": "https://github.com/mlocati/ocsp/issues/",
+	    "source": "https://github.com/mlocati/ocsp/"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "config": {
+        "sort-packages": true,
+        "optimize-autoloader": true
+    },
+    "autoload": {
+        "psr-4": {
+            "Ocsp\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Ocsp\\Test\\": "test/tests/"
+        }
+    },
+    "require": {
+        "php": ">=5.5.9",
+        "phpseclib/phpseclib": "^2.0"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^2.2",
+        "phpunit/phpunit": "^4.8 || ^5.7 || ^6.5 || ^7.4 || ^8.2"
+    },
+    "scripts": {
+	    "codestyle": "php-cs-fixer fix --path-mode=intersection --config=.php_cs.dist",
+        "test": "phpunit"
+    },
+    "keywords": [
+        "ocsp",
+        "certificate",
+        "https",
+        "revoke",
+        "revocation",
+        "revoked",
+        "online certificate status protocol",
+        "check",
+        "security"
+    ]
+}

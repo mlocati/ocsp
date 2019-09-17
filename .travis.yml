@@ -1,0 +1,99 @@
+sudo: false
+
+language: php
+
+cache:
+  directories:
+    - $HOME/.composer/cache/files
+
+matrix:
+
+  fast_finish: true
+
+  allow_failures:
+    - name: Test with PHP 7.4
+    - name: Test with PHP Nightly
+
+  include:
+
+    - name: Check coding style
+      php: '7.2'
+      before_script:
+        - phpenv config-rm xdebug.ini || true
+      install:
+        - travis_retry composer update --no-suggest --no-interaction
+      script:
+        - composer run-script codestyle -- --dry-run --dry-run --diff
+
+    - name: Test with PHP 5.5
+      dist: trusty
+      php: '5.5'
+      before_script:
+        - phpenv config-rm xdebug.ini || true
+      install:
+        - travis_retry composer update --no-suggest --no-interaction
+      script:
+        - composer run-script test -- -vvv
+
+    - name: Test with PHP 5.6
+      php: '5.6'
+      before_script:
+        - phpenv config-rm xdebug.ini || true
+      install:
+        - travis_retry composer update --no-suggest --no-interaction
+      script:
+        - composer run-script test -- -vvv
+
+    - name: Test with PHP 7.0
+      php: '7.0'
+      before_script:
+        - phpenv config-rm xdebug.ini || true
+      install:
+        - travis_retry composer update --no-suggest --no-interaction
+      script:
+        - composer run-script test -- -vvv
+
+    - name: Test with PHP 7.1
+      php: '7.1'
+      before_script:
+        - phpenv config-rm xdebug.ini || true
+      install:
+        - travis_retry composer update --no-suggest --no-interaction
+      script:
+        - composer run-script test
+
+    - name: Test with PHP 7.2
+      php: '7.2'
+      before_script:
+        - phpenv config-rm xdebug.ini || true
+      install:
+        - travis_retry composer update --no-suggest --no-interaction
+      script:
+        - composer run-script test -- -vvv
+
+    - name: Test with PHP 7.3
+      php: '7.3'
+      before_script:
+        - phpenv config-rm xdebug.ini || true
+      install:
+        - travis_retry composer update --no-suggest --no-interaction
+      script:
+        - composer run-script test -- -vvv
+
+    - name: Test with PHP 7.4
+      php: '7.4snapshot'
+      before_script:
+        - phpenv config-rm xdebug.ini || true
+      install:
+        - travis_retry composer update --no-suggest --no-interaction
+      script:
+        - composer run-script test -- -vvv
+
+    - name: Test with PHP Nightly
+      php: nightly
+      before_script:
+        - phpenv config-rm xdebug.ini || true
+      install:
+        - travis_retry composer update --no-suggest --no-interaction
+      script:
+        - composer run-script test -- -vvv
