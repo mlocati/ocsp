@@ -2,7 +2,9 @@
 
 # Online Certificate Status Protocol PHP Library
 
-This repository contains a PHP library that helps you checking if HTTP certificates are revoked, by using the Online Certificate Status Protocol (OCSP).
+This repository contains a PHP library that helps you checking if HTTPS certificates are revoked, by using the Online Certificate Status Protocol (OCSP).
+
+This library doesn't require `exec` calls to system utilities like OpenSSL: it's a pure PHP library.
 
 This library doesn't include any network-related helpers: you have to use your own transport libraries (cURL, Zend HTTP, Guzzle or whatever).
 
@@ -110,7 +112,7 @@ At this point, `$response` contains an instance of the `Ocsp\Response` class:
 
 ## Exceptions
 
-Problems may arise While loading the certificates, creating the request body for the OCSP Responder, analyzing the response from the OCSP Responder.
+Problems may arise while loading the certificates, creating the request body for the OCSP Responder, analyzing the response from the OCSP Responder.
 To catch these errors, you can enclose your code within try/catch statements:
 
 ```php
