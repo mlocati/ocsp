@@ -115,7 +115,7 @@ class Ocsp
     }
 
     /**
-     * Parse the response received from the OCSR Responder when you expect just one certificate revocation status.
+     * Parse the response received from the OCSP Responder when you expect just one certificate revocation status.
      *
      * @param string $rawResponseBody the raw response from the responder
      *
@@ -137,7 +137,7 @@ class Ocsp
     }
 
     /**
-     * Parse the response received from the OCSR Responder when you expect a variable number of certificate revocation statuses.
+     * Parse the response received from the OCSP Responder when you expect a variable number of certificate revocation statuses.
      *
      * @param string $rawResponseBody the raw response from the responder
      *
@@ -198,7 +198,7 @@ class Ocsp
     }
 
     /**
-     * Parse "responseBytes" element of a response received from the OCSR Responder.
+     * Parse "responseBytes" element of a response received from the OCSP Responder.
      *
      * @param \Ocsp\Asn1\Element\Sequence $responseBytes
      *
@@ -222,7 +222,7 @@ class Ocsp
     }
 
     /**
-     * Parse the "responseBytes" element of a response received from the OCSR Responder.
+     * Parse the "responseBytes" element of a response received from the OCSP Responder.
      *
      * @param string $responseBytes
      *
