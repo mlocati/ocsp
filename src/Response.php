@@ -38,10 +38,12 @@ class Response
     private $revokedOn;
 
     /**
+     * @param \DateTimeImmutable $thisUpdate
      * @param string $certificateSerialNumber
      */
-    protected function __construct($certificateSerialNumber)
+    protected function __construct(DateTimeImmutable $thisUpdate, $certificateSerialNumber)
     {
+        $this->thisUpdate = $thisUpdate;
         $this->certificateSerialNumber = $certificateSerialNumber;
     }
 
