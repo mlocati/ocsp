@@ -5,9 +5,12 @@ namespace Ocsp;
 use Ocsp\Asn1\Der\Decoder as DerDecoder;
 use Ocsp\Asn1\Der\Encoder as DerEncoder;
 use Ocsp\Asn1\Element;
+use Ocsp\Asn1\Element\AbstractList;
+use Ocsp\Asn1\Element\GeneralizedTime;
 use Ocsp\Asn1\Element\Integer;
 use Ocsp\Asn1\Element\ObjectIdentifier;
 use Ocsp\Asn1\Element\OctetString;
+use Ocsp\Asn1\Element\RawPrimitive;
 use Ocsp\Asn1\Element\Sequence;
 use Ocsp\Asn1\Tag;
 use Ocsp\Asn1\TaggableElement;
@@ -301,7 +304,27 @@ class Ocsp
             case 0:
                 return Response::good($thisUpdate, $certificateSerialNumber);
             case 1:
-                return Response::revoked($thisUpdate, $certificateSerialNumber, $certStatus->getValue());
+                $revokedOn = null;
+                $revocationReason = Response::REVOCATIONREASON_UNSPECIFIED;
+                if ($certStatus instanceof GeneralizedTime) {
+                    $revokedOn = $certStatus->getValue();
+                } elseif ($certStatus instanceof AbstractList) {
+                    $certStatusChildren = $certStatus->getElements();
+                    if (isset($certStatusChildren[0]) && $certStatusChildren[0] instanceof GeneralizedTime) {
+                        $revokedOn = $certStatusChildren[0]->getValue();
+                        if (isset($certStatusChildren[1]) && $certStatusChildren[1] instanceof RawPrimitive) {
+                            $bitString = $certStatusChildren[1]->getRawEncodedValue();
+                            if (strlen($bitString) === 1) {
+                                $revocationReason = ord($bitString[0]);
+                            }
+                        }
+                    }
+                }
+                if ($revokedOn === null) {
+                    throw Asn1DecodingException::create('Failed to find the revocation date/time');
+                }
+
+                return Response::revoked($thisUpdate, $certificateSerialNumber, $revokedOn, $revocationReason);
             case 2:
             default:
                 return Response::unknown($thisUpdate, $certificateSerialNumber);
