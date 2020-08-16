@@ -8,7 +8,7 @@ This library doesn't require `exec` calls to system utilities like OpenSSL: it's
 
 This library doesn't include any network-related helpers: you have to use your own transport libraries (cURL, Zend HTTP, Guzzle or whatever).
 
-Checking if HTTPS certificates requires:
+Checking HTTPS certificates requires:
 
 - the certificate to be checked, in PEM format (that is, the text files that starts with `-----BEGIN CERTIFICATE-----), or in DER format (that is, binary files)
 - the issuer certificate, that is the certificate of the Certification Authority that provided you the HTTPS certificate
