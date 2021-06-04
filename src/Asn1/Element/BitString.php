@@ -2,18 +2,29 @@
 
 namespace Ocsp\Asn1\Element;
 
+use Ocsp\Asn1\Element;
 use Ocsp\Asn1\Encoder;
 use Ocsp\Asn1\TaggableElement;
-use Ocsp\Asn1\TaggableElementTrait;
 use Ocsp\Asn1\UniversalTagID;
 
 /**
  * ASN.1 element: BIT STRING.
+ * 
+ * Example:
+ * 
+ * Example: 
+ * The DER encoding of the BIT STRING value "01101110 01011101 11------" which requires 6 padding bits is 03 04 06 6e 5d c0
+ *  $b = (new Decoder())->decodeElement( hex2bin('0304066e5dc0' ) );
+ *  $e = (new \Ocsp\Asn1\Der\Encoder())->encodeElement( $b );
+ *  $h = bin2hex( $e );
+ * The result $h is the same as the input.
+ * 
+ * To store an integer do something like:
+ *  $b = BitString::create( trim( pack( 'N', 7232960 ) ), 6 );
+ * The pack is trimmed because if the number uses fewer than 4 bytes it will be padded
  */
-class BitString implements TaggableElement
+class BitString extends TaggableElement
 {
-    use TaggableElementTrait;
-
     /**
      * The bytes containing the value bits.
      *
@@ -50,7 +61,7 @@ class BitString implements TaggableElement
      */
     public function getClass()
     {
-        return static::CLASS_UNIVERSAL;
+        return Element::CLASS_UNIVERSAL;
     }
 
     /**

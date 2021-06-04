@@ -28,7 +28,7 @@ interface Encoder
     /**
      * Encode the value of an INTEGER element.
      *
-     * @param int|string|\phpseclib\Math\BigInteger $value
+     * @param int|string|BigInteger $value
      *
      * @return string
      */
@@ -72,11 +72,44 @@ interface Encoder
     public function encodeBitString($bytes, $unusedBitsInLastByte);
 
     /**
-     * Encode the value of a BIT STRING element.
+     * Encode the value of a GENERALIZED TIME element.
      *
      * @param \DateTimeImmutable $value
      *
      * @return string
      */
-    public function encodeGeneralizedTime(DateTimeImmutable $value);
+    public function encodeGeneralizedTime( $value );
+
+    /**
+     * Encode the value of a BOOLEAN element.
+     *
+     * @param bool $value
+     *
+     * @return string
+     */
+    public function encodeBoolean( $value);
+
+    /**
+     * Encode the value of a ENUMERATED element.
+     *
+     * @param int $value
+     *
+     * @return string
+     */
+    public function encodeEnumerated( $value);
+
+    /**
+     * Encode the value of a NULL element.
+     *
+     * @return string
+     */
+    public function encodeNull();
+
+    /**
+     * Encode the value of a UTCTime element.
+     *
+     * @return string
+     */
+    public function encodeUTCTime( $value );
+
 }

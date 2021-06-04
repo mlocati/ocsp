@@ -5,11 +5,18 @@ namespace Ocsp;
 use Ocsp\Asn1\Der\Decoder as DerDecoder;
 use Ocsp\Asn1\Der\Encoder as DerEncoder;
 use Ocsp\Asn1\Element;
+use Ocsp\Asn1\Element\BitString;
+use Ocsp\Asn1\Element\Integer;
+use Ocsp\Asn1\Element\ObjectIdentifier;
+use Ocsp\Asn1\Element\OctetString;
 use Ocsp\Asn1\Element\RawPrimitive;
 use Ocsp\Asn1\Element\Sequence;
 use Ocsp\Asn1\Tag;
 use Ocsp\Asn1\UniversalTagID;
 use Ocsp\Exception\Asn1DecodingException;
+
+use const Ocsp\Asn1\authorityInfoAccess;
+use const Ocsp\Asn1\caIssuers;
 
 class CertificateInfo
 {
@@ -51,9 +58,11 @@ class CertificateInfo
         }
         foreach ($authorityInfoAccess->getElements() as $accessDescription) {
             $accessMethod = $accessDescription instanceof Sequence ? $accessDescription->getFirstChildOfType(UniversalTagID::OBJECT_IDENTIFIER) : null;
+            /** @var ObjectIdentifier $accessMethod */
             if ($accessMethod === null || $accessMethod->getIdentifier() !== '1.3.6.1.5.5.7.48.1') {
                 continue;
             }
+            /** @var Sequence $accessDescription */
             $accessLocation = $accessDescription->getFirstChildOfType(6, Element::CLASS_CONTEXTSPECIFIC);
             if (!$accessLocation instanceof RawPrimitive) {
                 return '';
@@ -78,11 +87,14 @@ class CertificateInfo
         if ($authorityInfoAccess === null) {
             return '';
         }
-        foreach ($authorityInfoAccess->getElements() as $accessDescription) {
+        foreach( $authorityInfoAccess->getElements() as $accessDescription )
+        {
             $accessMethod = $accessDescription instanceof Sequence ? $accessDescription->getFirstChildOfType(UniversalTagID::OBJECT_IDENTIFIER) : null;
-            if ($accessMethod === null || $accessMethod->getIdentifier() !== '1.3.6.1.5.5.7.48.2') {
+            /** @var ObjectIdentifier $accessMethod */
+            if ($accessMethod === null || $accessMethod->getIdentifier() !== caIssuers ) {
                 continue;
             }
+            /** @var Sequence $accessDescription */
             $accessLocation = $accessDescription->getFirstChildOfType(6, Element::CLASS_CONTEXTSPECIFIC);
             if (!$accessLocation instanceof RawPrimitive) {
                 return '';
@@ -137,10 +149,13 @@ class CertificateInfo
             if (!$extension instanceof Sequence) {
                 continue;
             }
+            /** @var Sequence $extension */
             $extnID = $extension->getFirstChildOfType(UniversalTagID::OBJECT_IDENTIFIER);
-            if ($extnID === null || $extnID->getIdentifier() !== '1.3.6.1.5.5.7.1.1') {
+            /** @var ObjectIdentifier $extnID */
+            if ($extnID === null || $extnID->getIdentifier() !== authorityInfoAccess ) {
                 continue;
             }
+            /** @var OctetString */
             $extnValue = $extension->getFirstChildOfType(UniversalTagID::OCTET_STRING);
             if ($extnValue === null) {
                 return '';
@@ -169,17 +184,41 @@ class CertificateInfo
      */
     protected function extractSerialNumber(Sequence $certificate)
     {
+        /** @var Sequence */
         $tbsCertificate = $certificate->getFirstChildOfType(UniversalTagID::SEQUENCE);
         if ($tbsCertificate === null) {
             return '';
         }
+
+        /** @var Integer */
         $serialNumber = $tbsCertificate->getFirstChildOfType(UniversalTagID::INTEGER);
         if ($serialNumber === null) {
             return '';
         }
 
-        return (string) $serialNumber->getValue();
+        $encoder = new DerEncoder();
+        return $serialNumber->getEncodedValue( $encoder );
     }
+
+    /**
+     * Extract the issuer sequence.
+     *
+     * @param \Ocsp\Asn1\Element\Sequence $certificate
+     *
+     * @return Sequence Empty string if not found
+     *
+     * @see https://tools.ietf.org/html/rfc2459#section-4.1 for Certificate
+     */
+    public function extractIssuer(Sequence $certificate)
+    {
+        /** @var Sequence */
+        $tbsCertificate = $certificate->getFirstChildOfType(UniversalTagID::SEQUENCE);
+        if ($tbsCertificate === null) 
+        {
+            return '';
+        }
+        return $tbsCertificate->getNthChildOfType(2, UniversalTagID::SEQUENCE) ?? '';
+        }
 
     /**
      * Extract the DER-encoded data of the issuer.
@@ -192,16 +231,8 @@ class CertificateInfo
      */
     protected function extractIssuerDer(Sequence $certificate)
     {
-        $tbsCertificate = $certificate->getFirstChildOfType(UniversalTagID::SEQUENCE);
-        if ($tbsCertificate === null) {
-            return '';
-        }
-        $issuer = $tbsCertificate->getNthChildOfType(2, UniversalTagID::SEQUENCE);
-        if ($issuer === null) {
-            return '';
-        }
-
-        return $this->derEncoder->encodeElement($issuer);
+        $issuer = $this->extractIssuer( $certificate );
+        return $issuer ? $this->derEncoder->encodeElement( $issuer ) : '';
     }
 
     /**
@@ -213,14 +244,17 @@ class CertificateInfo
      */
     protected function extractSubjectPublicKeyBytes(Sequence $certificate)
     {
+        /** @var Sequence */
         $tbsCertificate = $certificate->getFirstChildOfType(UniversalTagID::SEQUENCE);
         if ($tbsCertificate === null) {
             return '';
         }
+        /** @var Sequence */
         $subjectPublicKeyInfo = $tbsCertificate->getNthChildOfType(5, UniversalTagID::SEQUENCE);
         if ($subjectPublicKeyInfo === null) {
             return '';
         }
+        /** @var BitString */
         $subjectPublicKey = $subjectPublicKeyInfo->getFirstChildOfType(UniversalTagID::BIT_STRING);
         if ($subjectPublicKey === null) {
             return '';

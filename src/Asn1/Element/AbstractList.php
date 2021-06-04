@@ -3,16 +3,16 @@
 namespace Ocsp\Asn1\Element;
 
 use Ocsp\Asn1\Element;
+use Ocsp\Asn1\Util\BigInteger;
 use Ocsp\Asn1\Encoder;
 use Ocsp\Asn1\TaggableElement;
-use Ocsp\Asn1\TaggableElementTrait;
 
 /**
  * Base handy class for CONSTRUCTED ASN.1 elements.
  */
-abstract class AbstractList implements TaggableElement
+abstract class AbstractList extends TaggableElement
 {
-    use TaggableElementTrait;
+    // use TaggableElementTrait;
 
     /**
      * The child elements.
@@ -28,7 +28,7 @@ abstract class AbstractList implements TaggableElement
      */
     public function getClass()
     {
-        return static::CLASS_UNIVERSAL;
+        return Element::CLASS_UNIVERSAL;
     }
 
     /**
@@ -97,54 +97,89 @@ abstract class AbstractList implements TaggableElement
     }
 
     /**
+     * Shorthand function to get the first element of any type
+     *
+     * @return TaggableElement
+     */
+    public function first()
+    {
+        return $this->at( 1 );
+    }
+
+    /**
      * Find the first child of a specific type.
      *
-     * @param int|string|\phpseclib\Math\BigInteger $typeID
+     * @param int|string|BigInteger $typeID
      * @param string $class
      * @param string $tagEnvironment
      *
-     * @return \Ocsp\Asn1\Element|null
+     * @return Element
      */
-    public function getFirstChildOfType($typeID, $class = Element::CLASS_UNIVERSAL, $tagEnvironment = '')
+    public function getFirstChildOfType( $typeID, $class = Element::CLASS_UNIVERSAL, $tagEnvironment = '' )
     {
-        return $this->getNthChildOfType(1, $typeID, $class, $tagEnvironment);
+        return $this->getNthChildOfType( 1, $typeID, $class, $tagEnvironment);
+    }
+
+    /**
+     * Shorthand function to get the element of any type at some position
+     *
+     * @param int $position
+     * @return TaggableElement
+     */
+    public function at( $position )
+    {
+        return $this->getNthChildOfType( $position, null );
     }
 
     /**
      * Find the Nth child of a specific type.
      *
      * @param int $position
-     * @param int|string|\phpseclib\Math\BigInteger $typeID
+     * @param int|string|BigInteger $typeID
      * @param string $class
      * @param string $tagEnvironment
      *
-     * @return \Ocsp\Asn1\Element|null
+     * @return Element
      */
     public function getNthChildOfType($position, $typeID, $class = Element::CLASS_UNIVERSAL, $tagEnvironment = '')
     {
         $typeIDString = (string) $typeID;
         $found = 0;
-        foreach ($this->getElements() as $element) {
+        foreach ($this->getElements() as $element) 
+        {
+            if ( ! is_null( $typeID ) )
+            {
             $tag = $element instanceof TaggableElement ? $element->getTag() : null;
             $actualTypeIDString = (string) ($tag === null ? $element->getTypeID() : $tag->getTagID());
-            if ($actualTypeIDString !== $typeIDString) {
+                if ($actualTypeIDString !== $typeIDString)
+                {
                 continue;
             }
+
             $actualClass = $tag === null ? $element->getClass() : $tag->getClass();
-            if ($actualClass !== $class) {
+                if ($actualClass !== $class)
+                {
                 continue;
             }
-            if ($tagEnvironment === '') {
-                if ($tag !== null) {
+
+                if ($tagEnvironment === '')
+                {
+                    if ($tag !== null) 
+                    {
                     continue;
                 }
-            } else {
+                } else 
+                {
                 if ($tag === null || $tag->getEnvironment() !== $tagEnvironment) {
                     continue;
                 }
             }
+            }
+
             ++$found;
-            if ($found === $position) {
+
+            if ($found === $position)
+            {
                 return $element;
             }
         }

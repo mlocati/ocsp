@@ -2,19 +2,17 @@
 
 namespace Ocsp\Asn1\Element;
 
+use Ocsp\Asn1\Element;
 use Ocsp\Asn1\Encoder;
 use Ocsp\Asn1\TaggableElement;
-use Ocsp\Asn1\TaggableElementTrait;
 use Ocsp\Asn1\UniversalTagID;
 use Ocsp\Exception\InvalidAsn1Value;
 
 /**
  * ASN.1 element: PrintableString.
  */
-class PrintableString implements TaggableElement
+class PrintableString extends TaggableElement
 {
-    use TaggableElementTrait;
-
     /**
      * The value of the element.
      *
@@ -43,7 +41,7 @@ class PrintableString implements TaggableElement
      */
     public function getClass()
     {
-        return static::CLASS_UNIVERSAL;
+        return Element::CLASS_UNIVERSAL;
     }
 
     /**

@@ -2,35 +2,26 @@
 
 namespace Ocsp\Asn1\Element;
 
+use DateTimeImmutable;
 use Ocsp\Asn1\Element;
 use Ocsp\Asn1\Encoder;
 use Ocsp\Asn1\TaggableElement;
 use Ocsp\Asn1\UniversalTagID;
 
 /**
- * ASN.1 element: OCTET STRING.
+ * ASN.1 element: NULL.
  */
-class OctetString extends TaggableElement
+class NullElement extends TaggableElement
 {
-    /**
-     * The value of the element.
-     *
-     * @var string
-     */
-    private $value;
-
     /**
      * Create a new instance.
      *
-     * @param string $value the value of the element
-     *
      * @return static
      */
-    public static function create($value)
+    public static function create()
     {
         $result = new static();
-
-        return $result->setValue($value);
+        return $result;
     }
 
     /**
@@ -50,7 +41,7 @@ class OctetString extends TaggableElement
      */
     public function getTypeID()
     {
-        return UniversalTagID::OCTET_STRING;
+        return UniversalTagID::NULL;
     }
 
     /**
@@ -64,27 +55,11 @@ class OctetString extends TaggableElement
     }
 
     /**
-     * Get the value of the element.
-     *
-     * @return string
+     * @return bool
      */
     public function getValue()
     {
-        return $this->value;
-    }
-
-    /**
-     * Update the value of the element.
-     *
-     * @param string $value
-     *
-     * @return $this
-     */
-    public function setValue($value)
-    {
-        $this->value = (string) $value;
-
-        return $this;
+        return null;
     }
 
     /**
@@ -94,6 +69,6 @@ class OctetString extends TaggableElement
      */
     public function getEncodedValue(Encoder $encoder)
     {
-        return $encoder->encodeOctetString($this->getValue());
+        return $encoder->encodeNull();
     }
 }

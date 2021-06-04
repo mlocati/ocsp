@@ -6,11 +6,12 @@ use DateTime;
 use DateTimeImmutable;
 use DateTimeZone;
 use Ocsp\Asn1\Element;
+use Ocsp\Asn1\Element\UTCTime;
+use Ocsp\Asn1\Util\BigInteger;
 use Ocsp\Asn1\Encoder as EncoderInterface;
 use Ocsp\Asn1\Tag;
 use Ocsp\Asn1\TaggableElement;
 use Ocsp\Exception\Asn1EncodingException;
-use phpseclib\Math\BigInteger;
 
 /**
  * Encoder from ASN.1 to DER.
@@ -60,24 +61,12 @@ class Encoder implements EncoderInterface
      */
     public function encodeInteger($value)
     {
-        if (is_int($value)) {
-            if ($value === 0) {
-                return "\x00";
-            }
-            if ($value > 0) {
-                if (PHP_INT_SIZE === 4 || $value < 0xffffffff) {
-                    return ltrim(pack('N', $value), "\x00");
-                }
-                if (PHP_VERSION_ID >= 50603) {
-                    return ltrim(pack('J', $value), "\x00");
-                }
-            }
-            $value = new BigInteger((string) $value);
-        } elseif (is_string($value)) {
-            $value = new BigInteger($value);
+        if ( ! $value instanceof BigInteger )
+        {
+            $value = new BigInteger( gmp_init( $value ) );
         }
 
-        return $value->toBytes(true);
+        return $value->unsignedOctets();
     }
 
     /**
@@ -131,7 +120,7 @@ class Encoder implements EncoderInterface
      *
      * @see \Ocsp\Asn1\Encoder::encodeGeneralizedTime()
      */
-    public function encodeGeneralizedTime(DateTimeImmutable $value)
+    public function encodeGeneralizedTime( $value )
     {
         $datetime = new DateTime('now', new DateTimeZone('UTC'));
         $datetime->setTimestamp($value->getTimestamp());
@@ -147,8 +136,44 @@ class Encoder implements EncoderInterface
     }
 
     /**
+     * {@inheritdoc}
+     *
+     * @see \Ocsp\Asn1\Encoder::encodeGeneralizedTime()
+     */
+    public function encodeUTCTime( $value )
+    {
+        /** @var \DateTimeImmutable $value */
+        $dt = $value->setTimezone( UTCTime::createTimeZone( UTCTime::TZ_UTC ) );
+        return $dt->format('ymdHis\\Z');
+    }
+
+    /**
+     * Encode the value of a BOOLEAN element.
+     *
+     * @param bool $value
+     *
+     * @return string
+     */
+    public function encodeBoolean( $value )
+    {
+        return $value
+            ? chr( 0xFF )
+            : chr( 0x00 );
+    }
+
+    /**
+     * Encode the value of a NULL element.
+     *
+     * @return string
+     */
+    public function encodeNull()
+    {
+        return null;
+    }
+
+    /**
      * @param \Ocsp\Asn1\Element $element
-     * @param \Ocsp\Asn1\Tag|null $implicitTag
+     * @param \Ocsp\Asn1\Tag $implicitTag
      *
      * @throws \Ocsp\Exception\Asn1EncodingException when the element or the tag are defined in invalid classes
      *
@@ -159,7 +184,7 @@ class Encoder implements EncoderInterface
         if ($implicitTag === null) {
             $result = $this->encodeType($element->getTypeID(), $element->getClass(), $element->isConstructed());
         } else {
-            $result = $this->encodeType($implicitTag->getTagID(), $implicitTag->getClass(), $element->isConstructed());
+            $result = $this->encodeType($implicitTag->getTagID(), $implicitTag->getClass(), is_null( $implicitTag->isConstructed() ) ? $element->isConstructed() : $implicitTag->isConstructed() );
         }
         $elementBytes = $element->getEncodedValue($this);
 
@@ -187,7 +212,7 @@ class Encoder implements EncoderInterface
             }
             $bits = decbin($int);
         } else {
-            $bits = (new BigInteger($part))->toBits();
+            $bits = (new BigInteger($part))->unsignedOctets();
         }
         do {
             array_unshift($bytes, bindec(substr($bits, -7)));
@@ -200,6 +225,18 @@ class Encoder implements EncoderInterface
         $result .= chr(reset($bytes));
 
         return $result;
+    }
+
+    /**
+     * Encode the value of a ENUMERATED element.
+     *
+     * @param int $value
+     *
+     * @return string
+     */
+    public function encodeEnumerated( $value)
+    {
+        return pack( 'C*', $value );
     }
 
     /**
@@ -302,6 +339,7 @@ class Encoder implements EncoderInterface
             $number = new BigInteger($number);
         }
 
-        return $number->toBits(true);
+        return $number->unsignedOctets();
     }
+
 }

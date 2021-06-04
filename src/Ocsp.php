@@ -18,6 +18,22 @@ use Ocsp\Asn1\UniversalTagID;
 use Ocsp\Exception\Asn1DecodingException;
 use Ocsp\Exception\ResponseException;
 
+const ERR_SUCCESS = 0;
+const ERR_MALFORMED_ASN1 = 1;
+const ERR_INTERNAL_ERROR = 2;
+const ERR_TRY_LATER = 3;
+const ERR_SIG_REQUIRED = 5;
+const ERR_UNAUTHORIZED = 6;
+const ERR_UNSUPPORTED_VERSION = 12;
+const ERR_REQLIST_EMPTY = 13;
+const ERR_REQLIST_MULTI = 14;
+const ERR_UNSUPPORTED_EXT = 15;
+const ERR_UNSUPPORTED_ALG = 16;
+
+const CERT_STATUS_GOOD = 0;
+const CERT_STATUS_REVOKED = 1;
+const CERT_STATUS_UNKNOWN = 2;
+
 class Ocsp
 {
     /**
@@ -100,7 +116,7 @@ class Ocsp
                         // OCTET STRING [issuerKeyHash]
                         OctetString::create(sha1($request->getIssuerPublicKeyBytes(), true)),
                         // CertificateSerialNumber [serialNumber]
-                        Integer::create($request->getCertificateSerialNumber()),
+                        Integer::create( Integer::decodeInteger( $request->getCertificateSerialNumber() ) ),
                     ]),
                 ])
             );
@@ -121,6 +137,7 @@ class Ocsp
      * Parse the response received from the OCSP Responder when you expect just one certificate revocation status.
      *
      * @param string $rawResponseBody the raw response from the responder
+     * @param string $signer The certificate used to sign the parts of the response (the issuer certificate)
      *
      * @throws \Ocsp\Exception\Asn1DecodingException if $rawBody is not a valid response from the OCSP responder
      * @throws \Ocsp\Exception\ResponseException:: if the request was not successfull
@@ -129,9 +146,9 @@ class Ocsp
      *
      * @see https://tools.ietf.org/html/rfc6960#section-4.2.1
      */
-    public function decodeOcspResponseSingle($rawResponseBody)
+    public function decodeOcspResponseSingle( $rawResponseBody, $signer = null )
     {
-        $responses = $this->decodeOcspResponse($rawResponseBody)->getResponses();
+        $responses = $this->decodeOcspResponse( $rawResponseBody, $signer )->getResponses();
         if (count($responses) !== 1) {
             throw ResponseException\MultipleResponsesException::create();
         }
@@ -143,6 +160,7 @@ class Ocsp
      * Parse the response received from the OCSP Responder when you expect a variable number of certificate revocation statuses.
      *
      * @param string $rawResponseBody the raw response from the responder
+     * @param string $signer The certificate used to sign the parts of the response (the issuer certificate)
      *
      * @throws \Ocsp\Exception\Asn1DecodingException if $rawBody is not a valid response from the OCSP responder
      * @throws \Ocsp\Exception\ResponseException:: if the request was not successfull
@@ -151,19 +169,23 @@ class Ocsp
      *
      * @see https://tools.ietf.org/html/rfc6960#section-4.2.1
      */
-    public function decodeOcspResponse($rawResponseBody)
+    public function decodeOcspResponse( $rawResponseBody, $signer = null )
     {
         $ocspResponse = $this->derDecoder->decodeElement($rawResponseBody);
-        if (!$ocspResponse instanceof Sequence) {
+        if (!$ocspResponse instanceof Sequence)
+        {
             throw Asn1DecodingException::create('Invalid response type');
         }
-        $this->checkResponseStatus($ocspResponse);
-        $responseBytes = $ocspResponse->getFirstChildOfType(0, Element::CLASS_CONTEXTSPECIFIC, Tag::ENVIRONMENT_EXPLICIT);
-        if (!$responseBytes instanceof Sequence) {
+
+        $this->checkResponseStatus( $ocspResponse );
+
+        $responseBytes = \Ocsp\Asn1\asSequence( $ocspResponse->getFirstChildOfType( 0, Element::CLASS_CONTEXTSPECIFIC, Tag::ENVIRONMENT_EXPLICIT ) );
+        if ( ! $responseBytes )
+        {
             throw ResponseException\MissingResponseBytesException::create();
         }
 
-        return $this->decodeResponseBytes($responseBytes);
+        return $this->decodeResponseBytes( $responseBytes, $signer );
     }
 
     /**
@@ -178,22 +200,23 @@ class Ocsp
      */
     protected function checkResponseStatus(Sequence $ocspResponse)
     {
-        $responseStatus = $ocspResponse->getFirstChildOfType(UniversalTagID::ENUMERATED);
+        $responseStatus = \Ocsp\Asn1\asEnumerated( $ocspResponse->getFirstChildOfType(UniversalTagID::ENUMERATED) );
         if ($responseStatus === null) {
             throw Asn1DecodingException::create('Invalid response type');
         }
-        switch ($responseStatus->getRawEncodedValue()) {
-            case "\x00": // successful (Response has valid confirmations)
+        switch ( $responseStatus->getValue() ) 
+        {
+            case ERR_SUCCESS:        // successful (Response has valid confirmations)
                 break;
-            case "\x01": // malformedRequest (Illegal confirmation request)
+            case ERR_MALFORMED_ASN1: // malformedRequest (Illegal confirmation request)
                 throw ResponseException\MalformedRequestException::create();
-            case "\x02": // internalError (Internal error in issuer)
+            case ERR_INTERNAL_ERROR: // internalError (Internal error in issuer)
                 throw ResponseException\InternalErrorException::create();
-            case "\x03": // tryLater (Try again later)
+            case ERR_TRY_LATER:      // tryLater (Try again later)
                 throw ResponseException\TryLaterException::create();
-            case "\x05": // sigRequired (Must sign the request)
+            case ERR_SIG_REQUIRED:   // sigRequired (Must sign the request)
                 throw ResponseException\SigRequiredException::create();
-            case "\x06": // unauthorized (Request unauthorized)
+            case ERR_UNAUTHORIZED  : // unauthorized (Request unauthorized)
                 throw ResponseException\UnauthorizedException::create();
             default:
                 throw Asn1DecodingException::create('Invalid response data');
@@ -204,20 +227,26 @@ class Ocsp
      * Parse "responseBytes" element of a response received from the OCSP Responder.
      *
      * @param \Ocsp\Asn1\Element\Sequence $responseBytes
+     * @param string $signer The certificate used to sign the parts of the response (the issuer certificate)
      *
      * @throws \Ocsp\Exception\Asn1DecodingException
      * @throws \Ocsp\Exception\ResponseException
      *
      * @see https://tools.ietf.org/html/rfc6960#section-4.2.1
      */
-    protected function decodeResponseBytes(Sequence $responseBytes)
+    protected function decodeResponseBytes( $responseBytes, $signer = null )
     {
-        $responseType = $responseBytes->getFirstChildOfType(UniversalTagID::OBJECT_IDENTIFIER);
-        $response = $responseBytes->getFirstChildOfType(UniversalTagID::OCTET_STRING);
-        if ($responseType !== null && $response !== null) {
-            switch ($responseType->getIdentifier()) {
+        $responseType = \Ocsp\Asn1\asObjectIdentifier( $responseBytes->getFirstChildOfType(UniversalTagID::OBJECT_IDENTIFIER) );
+        if ( $responseType )
+        {
+            $response = \Ocsp\Asn1\asOctetString( $responseBytes->getFirstChildOfType(UniversalTagID::OCTET_STRING) );
+            if ( $response !== null )
+            {
+                switch ( $responseType->getIdentifier() )
+    {
                 case '1.3.6.1.5.5.7.48.1.1':
-                    return $this->decodeBasicResponse($response->getValue());
+                        return $this->decodeBasicResponse( $response->getValue(), $signer );
+                }
             }
         }
 
@@ -228,40 +257,260 @@ class Ocsp
      * Parse the "responseBytes" element of a response received from the OCSP Responder.
      *
      * @param string $responseBytes
-     *
-     * @throws \Ocsp\Exception\Asn1DecodingException
-     * @throws \Ocsp\Exception\ResponseException
+     * @param string $signer The certificate used to sign the parts of the response (the issuer certificate)
      *
      * @see https://tools.ietf.org/html/rfc6960#section-4.2.1
      *
      * @return \Ocsp\ResponseList
      */
-    protected function decodeBasicResponse($responseBytes)
+    protected function decodeBasicResponse( $responseBytes, $signer = null )
     {
-        $basicOCSPResponse = $this->derDecoder->decodeElement($responseBytes);
-        if (!$basicOCSPResponse instanceof Sequence) {
+        /*
+            OCSPResponse ::= SEQUENCE 
+            {
+                responseStatus         OCSPResponseStatus,
+                responseBytes          [0] EXPLICIT ResponseBytes OPTIONAL 
+            }
+
+            ResponseBytes ::=       SEQUENCE
+            {
+                responseType   OBJECT IDENTIFIER,
+                response       OCTET STRING
+            }
+
+            responseType will be id-pkix-ocsp-basic (1.3.6.1.5.5.7.48.1.1)
+            reponse will be an encoded BasicOCSPResponse
+
+            BasicOCSPResponse ::= SEQUENCE
+            {
+                tbsResponseData     ResponseData,
+                signatureAlgorithm  AlgorithmIdentifier,
+                signature           BIT STRING,
+                certs               [0] EXPLICIT SEQUENCE OF Certificate OPTIONAL 
+            }
+
+            ResponseData ::= SEQUENCE
+            {
+                version             [0] EXPLICIT Version DEFAULT v1,
+                responderID             ResponderID,
+                producedAt              GeneralizedTime,
+                responses               SEQUENCE OF SingleResponse,
+                responseExtensions  [1] EXPLICIT Extensions OPTIONAL
+            }
+
+            ResponderID ::= CHOICE
+            {
+                byName               [1] Name,
+                byKey                [2] KeyHash
+            }
+
+            KeyHash ::= OCTET STRING -- SHA-1 hash of the value of the BIT STRING subjectPublicKey [excluding the tag, length, and number of unused bits] in the responder's certificate
+
+            SingleResponse ::= SEQUENCE
+            {
+                certID                       CertID,
+                certStatus                   CertStatus,
+                thisUpdate                   GeneralizedTime,
+                nextUpdate          [0]      EXPLICIT GeneralizedTime OPTIONAL,
+                singleExtensions    [1]      EXPLICIT Extensions OPTIONAL
+            }
+
+            CertID ::= SEQUENCE
+            {
+                hashAlgorithm       AlgorithmIdentifier,
+                issuerNameHash      OCTET STRING, -- Hash of issuer's DN
+                issuerKeyHash       OCTET STRING, -- Hash of issuer's public key
+                serialNumber        CertificateSerialNumber
+            }
+
+            CertStatus ::= CHOICE
+            {
+                good        [0]     IMPLICIT NULL,
+                revoked     [1]     IMPLICIT RevokedInfo,
+                unknown     [2]     IMPLICIT UnknownInfo
+            }
+
+            RevokedInfo ::= SEQUENCE
+            {
+                revocationTime              GeneralizedTime,
+                revocationReason    [0]     EXPLICIT CRLReason OPTIONAL
+            }
+
+            UnknownInfo ::= NULL
+         */
+
+        $basicOCSPResponse = \Ocsp\Asn1\asSequence( $this->derDecoder->decodeElement( $responseBytes ) );
+        if ( ! $basicOCSPResponse )
+    {
             throw Asn1DecodingException::create();
         }
-        $tbsResponseData = $basicOCSPResponse->getFirstChildOfType(UniversalTagID::SEQUENCE);
-        if (!$tbsResponseData instanceof Sequence) {
+
+        $tbsResponseData = \Ocsp\Asn1\asSequence( $basicOCSPResponse->getFirstChildOfType(UniversalTagID::SEQUENCE ) );
+        if ( ! $tbsResponseData ) 
+        {
             throw Asn1DecodingException::create();
         }
-        $responses = $tbsResponseData->getFirstChildOfType(UniversalTagID::SEQUENCE);
+
+        $signers = $this->verifySigning( $basicOCSPResponse, $signer, $this->derEncoder->encodeElement( $tbsResponseData ) );
+        if ( $signer && ! $signers )
+        {
+            throw new ResponseException( 'The response is signed but the signature cannot be verified' );
+        }
+    
+        $responses = \Ocsp\Asn1\asSequence( $tbsResponseData->getFirstChildOfType( UniversalTagID::SEQUENCE ) );
         if (!$responses instanceof Sequence) {
             throw Asn1DecodingException::create();
         }
+
         $responseList = ResponseList::create();
-        foreach ($responses->getElements() as $singleResponse) {
+        foreach ($responses->getElements() as $singleResponse)
+        {
             if ($singleResponse instanceof Sequence && $singleResponse->getTag() === null) {
                 $responseList->addResponse($this->decodeBasicSingleResponse($singleResponse));
             }
         }
-        if ($responseList->getResponses() === []) {
+
+        if ( $responseList->getResponses() === [] )
+        {
             throw ResponseException\MissingResponseBytesException::create();
         }
 
         return $responseList;
     }
+
+    /**
+	 * Convert binary (DER) ASN.1 string to PEM format.  The data is
+	 * base64-encoded and wrapped in a header ('-----BEGIN
+	 * $type-----') and a footer ('-----END $type-----').  The
+	 * conversion is required by PHP openssl_* functions for
+	 * key-containing parameters.
+	 *
+	 * @param string $data DER-encode binary data
+	 * @param string $type object type (i. e. 'CERTIFICATE', 'RSA
+	 * PUBLIC KEY', etc.
+	 *
+	 * @return string data in PEM format
+	 */
+    private static function PEMize( $data, $type )
+	{
+		return "-----BEGIN $type-----\r\n"
+		. chunk_split(base64_encode($data))
+		. "-----END $type-----\r\n";
+	}
+
+	/** @name Signature Verification
+	 *
+	 * Methods related to signature verification.  When called on those subclasses
+	 * of PKI2X\Message which describe signatureless messages.
+	 */
+	private static function _verifySig($data, $signature, $cert, $hashAlg)
+	{
+		$c = $cert;
+		if (strpos($cert, '-----BEGIN CERTIFICATE-----') !== 0) {
+			$c = self::PEMize($cert, 'CERTIFICATE');
+		}
+
+        // file_put_contents('c:/requester.txt',
+		// 	chunk_split( base64_encode( $data ) ) . "\n\n" .
+		// 	chunk_split( base64_encode( $signature ) ) . "\n\n" . 
+		// 	$hashAlg . "\n\n" .
+        //     $c 
+		// );
+
+		return openssl_verify($data, $signature, $c, $hashAlg);
+	}
+
+    /**
+     * Look for signature information in a sequence and if it exists verify the signing
+     *
+     * @param Sequence $sequence
+     * @param string $signer The certificate used to sign the parts of the response (the issuer certificate)
+     * @param string $signedData;
+     * @return boolean
+     */
+    public static function verifySigning( $sequence, $cert, $signedData )
+    {
+        // If there is a signature the sequence will have > 1 element otherwise return true
+        if ( count( $sequence->getElements() ) <= 1 ) return true;
+
+		$signature = self::getSignatureRaw( $sequence );
+		$signers = array();
+
+		$ha = self::getSignatureAlgorithm( $sequence );
+		$hashAlg = \Ocsp\Asn1\OID2Name[ $ha ];
+		if ( ! isset( $hashAlg ) )
+		{
+			throw new \Exception("Unsupported signature algorithm $ha");
+		}
+
+		$certs = self::getSignerCerts( $sequence );
+		if ( isset( $cert ) )
+		{
+			$certs = array( $cert );
+		}
+
+        // If there are no certificates there can be no valid verification
+        // This is not an error.  If the responder did not include a certificate and
+        // the caller did not supply the responder's then no verification is possible.
+
+		foreach( $certs as $cert )
+		{
+			$ret = self::_verifySig( $signedData, $signature, $cert, $hashAlg );
+			if ( $ret === 1 )
+			{
+				array_push( $signers, $cert );
+			}
+		}
+		return $signers;
+    }
+
+    /**
+     * Access any certificates provided
+     *
+     * @param Sequence $sequence
+     * @return string[]
+     */
+	private static function getSignerCerts( $sequence )
+	{
+        $signerCerts = array();
+        $certs = \Ocsp\Asn1\asSequence( $sequence->at(4) );
+        foreach( $certs ? $certs->getElements() : array() as $certSequence )
+        {
+            array_push( $signerCerts, (new DerEncoder)->encodeElement( $certSequence ) );
+        }
+
+		return $signerCerts;
+	}
+
+    /**
+     * Get the algorithm from the signed sequence
+     *
+     * @param Sequence $sequence
+     * @return string
+     */
+	private static function getSignatureAlgorithm( $sequence )
+	{
+		// skip tbsResponseData 
+		$sigalgOID = \Ocsp\Asn1\asObjectIdentifier( $sequence->at( 2 )->asSequence()->first() );
+        return $sigalgOID 
+            ? $sigalgOID->getIdentifier() /* signatureAlgorithm */
+            : null;
+	}
+
+    /**
+     * Get the signature bits
+     *
+     * @param Sequence $sequence
+     * @param bool $stripUnusedBitsFlag (default false)
+     * @return string
+     */
+	private static function getSignatureRaw( $sequence, $stripUnusedBitsFlag = false )
+	{
+		$sig = \Ocsp\Asn1\asBitString( $sequence->getFirstChildOfType( UniversalTagID::BIT_STRING ) )->getBytes();
+        return $stripUnusedBitsFlag 
+            ? substr( $sig, 1 ) /* skip the "unused bits" octet */
+            : $sig;
+	}
 
     /**
      * Parse a "SingleResponse" element of a BasicOCSPResponse.
@@ -282,8 +531,12 @@ class Ocsp
         if (!$certID instanceof Sequence) {
             throw Asn1DecodingException::create();
         }
-        $certificateSerialNumber = (string) $certID->getFirstChildOfType(UniversalTagID::INTEGER, Element::CLASS_UNIVERSAL)->getValue();
-        $thisUpdate = $singleResponse->getFirstChildOfType(UniversalTagID::GENERALIZEDTIME, Element::CLASS_UNIVERSAL)->getValue();
+        /** @var Integer */
+        $integer = $certID->getFirstChildOfType(UniversalTagID::INTEGER, Element::CLASS_UNIVERSAL);
+        $certificateSerialNumber = (string) $integer->getValue();
+        /** @var GeneralizedTime */
+        $genTime = $singleResponse->getFirstChildOfType(UniversalTagID::GENERALIZEDTIME, Element::CLASS_UNIVERSAL);
+        $thisUpdate = $genTime->getValue();
         $certStatus = isset($elements[1]) ? $elements[1] : null;
         if ($certStatus === null) {
             throw Asn1DecodingException::create();
@@ -309,10 +562,12 @@ class Ocsp
                 if ($certStatus instanceof GeneralizedTime) {
                     $revokedOn = $certStatus->getValue();
                 } elseif ($certStatus instanceof AbstractList) {
+                    /** @var Integer[] */
                     $certStatusChildren = $certStatus->getElements();
                     if (isset($certStatusChildren[0]) && $certStatusChildren[0] instanceof GeneralizedTime) {
                         $revokedOn = $certStatusChildren[0]->getValue();
                         if (isset($certStatusChildren[1]) && $certStatusChildren[1] instanceof RawPrimitive) {
+                            /** @var RawPrimitive[] $certStatusChildren */
                             $bitString = $certStatusChildren[1]->getRawEncodedValue();
                             if (strlen($bitString) === 1) {
                                 $revocationReason = ord($bitString[0]);

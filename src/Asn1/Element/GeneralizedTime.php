@@ -3,22 +3,42 @@
 namespace Ocsp\Asn1\Element;
 
 use DateTimeImmutable;
+use Ocsp\Asn1\Element;
 use Ocsp\Asn1\Encoder;
 use Ocsp\Asn1\TaggableElement;
-use Ocsp\Asn1\TaggableElementTrait;
 use Ocsp\Asn1\UniversalTagID;
+use Ocsp\Exception\Asn1DecodingException;
 
 /**
- * ASN.1 element: INTEGER.
+ * ASN.1 element: GENERALIZEDTIME.
  */
-class GeneralizedTime implements TaggableElement
+class GeneralizedTime extends TaggableElement
 {
-    use TaggableElementTrait;
-
     /**
      * @var \DateTimeImmutable
      */
     private $value;
+
+    /**
+     * Decode the value of a GeneralizedTime element.
+     *
+     * @param string $bytes
+     *
+     * @throws \Ocsp\Exception\Asn1DecodingException
+     *
+     * @return \DateTimeImmutable
+     */
+    public static function decodeGeneralizedTime( $bytes )
+    {
+        $matches = null;
+        if (!preg_match('/(\d{4}\d{2}\d{2}\d{2}\d{2}\d{2})(?:\.(\d*))?Z$/', $bytes, $matches)) {
+            throw Asn1DecodingException::create();
+        }
+        $dateTime = DateTimeImmutable::createFromFormat('!YmdHis.uT', $matches[1] . '.' . (isset($matches[2]) ? $matches[2] : '0') . 'UTC', new \DateTimeZone('UTC'));
+        $result = $dateTime->setTimezone( new \DateTimeZone( \date_default_timezone_get() ) );
+
+        return $result;
+    }
 
     /**
      * Create a new instance.
@@ -27,11 +47,11 @@ class GeneralizedTime implements TaggableElement
      *
      * @return static
      */
-    public static function create(DateTimeImmutable $value)
+    public static function create( $value )
     {
         $result = new static();
 
-        return $result->setValue($value);
+        return $result->setValue( $value );
     }
 
     /**
@@ -41,7 +61,7 @@ class GeneralizedTime implements TaggableElement
      */
     public function getClass()
     {
-        return static::CLASS_UNIVERSAL;
+        return Element::CLASS_UNIVERSAL;
     }
 
     /**
@@ -77,7 +97,7 @@ class GeneralizedTime implements TaggableElement
      *
      * @return $this
      */
-    public function setValue(DateTimeImmutable $value)
+    public function setValue( DateTimeImmutable $value )
     {
         $this->value = $value;
 
@@ -89,8 +109,8 @@ class GeneralizedTime implements TaggableElement
      *
      * @see \Ocsp\Asn1\Element::getEncodedValue()
      */
-    public function getEncodedValue(Encoder $encoder)
+    public function getEncodedValue( Encoder $encoder )
     {
-        return $encoder->encodeGeneralizedTime($this->getValue());
+        return $encoder->encodeGeneralizedTime( $this->getValue() );
     }
 }

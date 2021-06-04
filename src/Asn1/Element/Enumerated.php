@@ -2,8 +2,8 @@
 
 namespace Ocsp\Asn1\Element;
 
+use DateTimeImmutable;
 use Ocsp\Asn1\Element;
-use Ocsp\Asn1\Util\BigInteger;
 use Ocsp\Asn1\Encoder;
 use Ocsp\Asn1\TaggableElement;
 use Ocsp\Asn1\UniversalTagID;
@@ -11,17 +11,17 @@ use Ocsp\Asn1\UniversalTagID;
 /**
  * ASN.1 element: INTEGER.
  */
-class Integer extends TaggableElement
+class Enumerated extends TaggableElement
 {
     /**
-     * @var int|string|BigInteger
+     * @var int[]
      */
     private $value;
 
     /**
      * Create a new instance.
      *
-     * @param int|string|BigInteger $value
+     * @param bool $value
      *
      * @return static
      */
@@ -30,25 +30,6 @@ class Integer extends TaggableElement
         $result = new static();
 
         return $result->setValue( $value );
-    }
-
-    /**
-     * Decode the value of an INTEGER element.
-     *
-     * @param string $bytes
-     *
-     * @return int|BigInteger
-     */
-    public static function decodeInteger( $bytes )
-    {
-        $bint = $bytes instanceof BigInteger
-            ? $bytes
-            : new BigInteger( $bytes );
-
-        return $bint->isInt()
-            ? (int)$bint->intVal()
-            : $bint;
-
     }
 
     /**
@@ -68,7 +49,7 @@ class Integer extends TaggableElement
      */
     public function getTypeID()
     {
-        return UniversalTagID::INTEGER;
+        return UniversalTagID::ENUMERATED;
     }
 
     /**
@@ -82,7 +63,7 @@ class Integer extends TaggableElement
     }
 
     /**
-     * @return int|string|BigInteger
+     * @return int[]
      */
     public function getValue()
     {
@@ -90,20 +71,13 @@ class Integer extends TaggableElement
     }
 
     /**
-     * @param BigInteger|int|string $value
+     * @param int[] $value
      *
      * @return $this
      */
-    public function setValue($value)
+    public function setValue( $value )
     {
-        if ( is_int( $value ) || $value instanceof BigInteger )
         $this->value = $value;
-        else if ( $value instanceof \GMP )
-            $this->value = new BigInteger( $value );
-        else if ( filter_var( $value, FILTER_VALIDATE_INT ) )
-            $this->value = (int)$value;
-        else
-            $this->value = new BigInteger( gmp_init( $value ) );
 
         return $this;
     }
@@ -115,6 +89,6 @@ class Integer extends TaggableElement
      */
     public function getEncodedValue(Encoder $encoder)
     {
-        return $encoder->encodeInteger($this->getValue());
+        return $encoder->encodeEnumerated( $this->getValue() );
     }
 }

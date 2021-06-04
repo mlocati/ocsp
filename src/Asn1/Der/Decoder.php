@@ -7,8 +7,12 @@ use DateTimeZone;
 use Ocsp\Asn1\Decoder as DecoderInterface;
 use Ocsp\Asn1\Element;
 use Ocsp\Asn1\Element\BitString;
+use Ocsp\Asn1\Element\Boolean;
+use Ocsp\Asn1\Element\Enumerated;
 use Ocsp\Asn1\Element\GeneralizedTime;
+use Ocsp\Asn1\Element\IA5String;
 use Ocsp\Asn1\Element\Integer;
+use Ocsp\Asn1\Element\NullElement;
 use Ocsp\Asn1\Element\ObjectIdentifier;
 use Ocsp\Asn1\Element\OctetString;
 use Ocsp\Asn1\Element\PrintableString;
@@ -16,11 +20,13 @@ use Ocsp\Asn1\Element\RawConstructed;
 use Ocsp\Asn1\Element\RawPrimitive;
 use Ocsp\Asn1\Element\Sequence;
 use Ocsp\Asn1\Element\Set;
+use Ocsp\Asn1\Element\UTCTime;
+use Ocsp\Asn1\Util\BigInteger;
 use Ocsp\Asn1\Tag;
 use Ocsp\Asn1\TaggableElement;
 use Ocsp\Asn1\UniversalTagID;
+use Ocsp\Asn1\Element\UTF8String;
 use Ocsp\Exception\Asn1DecodingException;
-use phpseclib\Math\BigInteger;
 
 /**
  * Decoder from DER to ASN.1.
@@ -70,7 +76,7 @@ class Decoder implements DecoderInterface
     /**
      * Decode a CONSTRUCTED ASN.1 element.
      *
-     * @param int|\phpseclib\Math\BigInteger $typeID
+     * @param int|BigInteger $typeID
      * @param string $class
      * @param string $encodedValue
      *
@@ -116,15 +122,18 @@ class Decoder implements DecoderInterface
      *
      * @return \Ocsp\Asn1\Element
      */
-    protected function decodePrimitive($typeID, $class, $encodedValue)
+    protected function decodePrimitive( $typeID, $class, $encodedValue )
     {
-        if ($class === Element::CLASS_UNIVERSAL) {
-            switch ($typeID) {
+        if ($class === Element::CLASS_UNIVERSAL) 
+        {
+            switch ($typeID) 
+    {
                 case UniversalTagID::INTEGER:
-                    return Integer::create($this->decodeInteger($encodedValue));
+                    return Integer::create( Integer::decodeInteger( $encodedValue ) );
+                case UniversalTagID::UTCTIME:
+                    return UTCTime::create( UTCTime::decodeUTCTime( $encodedValue ) );
                 case UniversalTagID::BIT_STRING:
                     list($bytes, $numTrailingBits) = $this->decodeBitString($encodedValue);
-
                     return BitString::create($bytes, $numTrailingBits);
                 case UniversalTagID::OCTET_STRING:
                     return OctetString::create($this->decodeOctetString($encodedValue));
@@ -133,7 +142,18 @@ class Decoder implements DecoderInterface
                 case UniversalTagID::PRINTABLESTRING:
                     return PrintableString::create($this->decodePrintableString($encodedValue));
                 case UniversalTagID::GENERALIZEDTIME:
-                    return GeneralizedTime::create($this->decodeGeneralizedTime($encodedValue));
+                    return GeneralizedTime::create( GeneralizedTime::decodeGeneralizedTime( $encodedValue ) );
+                case UniversalTagID::BOOLEAN:
+                    return Boolean::create( $encodedValue );
+                case UniversalTagID::ENUMERATED:
+                    $value = unpack( 'C*', $encodedValue );
+                    return Enumerated::create( reset( $value ) );
+                case UniversalTagID::NULL:
+                    return NullElement::create();
+                case UniversalTagID::UTF8STRING:
+                    return UTF8String::create( $encodedValue );
+                case UniversalTagID::IA5STRING:
+                    return IA5String::create( $encodedValue );
             }
         }
 
@@ -148,7 +168,7 @@ class Decoder implements DecoderInterface
      *
      * @throws \Ocsp\Exception\Asn1DecodingException
      *
-     * @return array<int|\phpseclib\Math\BigInteger, string, bool>
+     * @return array<int|BigInteger, string, bool>
      */
     protected function decodeType($bytes, &$offset)
     {
@@ -265,37 +285,6 @@ class Decoder implements DecoderInterface
     }
 
     /**
-     * Decode the value of an INTEGER element.
-     *
-     * @param string $bytes
-     *
-     * @return int|\phpseclib\Math\BigInteger
-     */
-    protected function decodeInteger($bytes)
-    {
-        $numBytes = strlen($bytes);
-        $firstByte = ord($bytes[0]);
-        $isNegative = ($firstByte & 0b10000000) !== 0;
-        if ($isNegative === false) {
-            switch ($numBytes) {
-                case 1:
-                    return $firstByte;
-                case 2:
-                    return current(unpack('n', $bytes));
-                case 3:
-                    return current(unpack('N', "\x00" . $bytes));
-                case 4:
-                    return current(unpack('N', $bytes));
-            }
-            if ($numBytes <= 8 && PHP_INT_SIZE >= 8 && PHP_VERSION_ID >= 50603) {
-                return current(unpack('J', str_pad($bytes, 8, "\x00", STR_PAD_LEFT)));
-            }
-        }
-
-        return new BigInteger($bytes, -256);
-    }
-
-    /**
      * Decode the value of a BIT STRING element.
      *
      * @param string $bytes
@@ -373,24 +362,4 @@ class Decoder implements DecoderInterface
         return $bytes;
     }
 
-    /**
-     * Decode the value of a GeneralizedTime element.
-     *
-     * @param string $bytes
-     *
-     * @throws \Ocsp\Exception\Asn1DecodingException
-     *
-     * @return \DateTimeImmutable
-     */
-    protected function decodeGeneralizedTime($bytes)
-    {
-        $matches = null;
-        if (!preg_match('/(\d{4}\d{2}\d{2}\d{2}\d{2}\d{2})(?:\.(\d*))?Z$/', $bytes, $matches)) {
-            throw Asn1DecodingException::create();
-        }
-        $dateTime = DateTimeImmutable::createFromFormat('!YmdHis.uT', $matches[1] . '.' . (isset($matches[2]) ? $matches[2] : '0') . 'UTC', new DateTimeZone('UTC'));
-        $result = $dateTime->setTimezone(new DateTimeZone(date_default_timezone_get()));
-
-        return $result;
-    }
 }

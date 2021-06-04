@@ -2,18 +2,16 @@
 
 namespace Ocsp\Asn1\Element;
 
+use Ocsp\Asn1\Util\BigInteger;
 use Ocsp\Asn1\Encoder;
 use Ocsp\Asn1\TaggableElement;
-use Ocsp\Asn1\TaggableElementTrait;
 use Ocsp\Exception\Asn1EncodingException;
 
 /**
  * An un-decoded ASN.1 PRIMITIVE element.
  */
-class RawPrimitive implements TaggableElement
+class RawPrimitive extends TaggableElement
 {
-    use TaggableElementTrait;
-
     /**
      * The handle of the encoding.
      *
@@ -24,7 +22,7 @@ class RawPrimitive implements TaggableElement
     /**
      * The decoded type ID.
      *
-     * @var int|string|\phpseclib\Math\BigInteger
+     * @var int|string|BigInteger
      */
     private $typeID;
 
@@ -46,7 +44,7 @@ class RawPrimitive implements TaggableElement
      * Create a new instance.
      *
      * @param string $encoding the handle of the encoding
-     * @param int|string|\phpseclib\Math\BigInteger $typeID
+     * @param int|string|BigInteger $typeID
      * @param string $class the class (the value of one of the Element::CLASS_... constants)
      * @param string $rawEncodedValue the not decoded bytes representing the value
      *

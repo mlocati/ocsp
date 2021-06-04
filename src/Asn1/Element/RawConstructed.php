@@ -2,15 +2,13 @@
 
 namespace Ocsp\Asn1\Element;
 
-use Ocsp\Asn1\TaggableElementTrait;
+use Ocsp\Asn1\Util\BigInteger;
 
 /**
  * An un-decoded ASN.1 CONSTRUCTED element.
  */
 class RawConstructed extends AbstractList
 {
-    use TaggableElementTrait;
-
     /**
      * The handle of the encoding.
      *
@@ -21,7 +19,7 @@ class RawConstructed extends AbstractList
     /**
      * The decoded type ID.
      *
-     * @var int|string|\phpseclib\Math\BigInteger
+     * @var int|string|BigInteger
      */
     private $typeID;
 
@@ -36,7 +34,7 @@ class RawConstructed extends AbstractList
      * Create a new instance.
      *
      * @param string $encoding the handle of the encoding
-     * @param int|string|\phpseclib\Math\BigInteger $typeID
+     * @param int|string|BigInteger $typeID
      * @param string $class the class (the value of one of the Element::CLASS_... constants)
      * @param \Ocsp\Asn1\Element[] $elements
      *
