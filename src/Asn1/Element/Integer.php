@@ -103,7 +103,7 @@ class Integer extends TaggableElement
         else if ( filter_var( $value, FILTER_VALIDATE_INT ) )
             $this->value = (int)$value;
         else
-            $this->value = new BigInteger( gmp_init( $value ) );
+            $this->value = new BigInteger( \gmp_init( $value ) );
 
         return $this;
     }

@@ -63,7 +63,7 @@ class Encoder implements EncoderInterface
     {
         if ( ! $value instanceof BigInteger )
         {
-            $value = new BigInteger( gmp_init( $value ) );
+            $value = new BigInteger( \gmp_init( $value ) );
         }
 
         return $value->unsignedOctets();

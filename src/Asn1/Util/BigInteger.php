@@ -45,7 +45,7 @@ class BigInteger
         // convert to GMP object
         if ( ! ( $num instanceof \GMP) ) 
         {
-            $gmp = @gmp_import( $num );
+            $gmp = @\gmp_import( $num );
             if ( false === $gmp ) 
             {
                 throw new \InvalidArgumentException( "Unable to convert '{$num}'" );
@@ -66,7 +66,7 @@ class BigInteger
      */
     public function isInt()
     {
-       return gmp_cmp( $this->_gmp, $this->_intMinGmp() ) >= 0 && gmp_cmp( $this->_gmp, $this->_intMaxGmp() ) <= 0 ;
+       return \gmp_cmp( $this->_gmp, $this->_intMinGmp() ) >= 0 && \gmp_cmp( $this->_gmp, $this->_intMaxGmp() ) <= 0 ;
     }
 
     /**
@@ -77,7 +77,7 @@ class BigInteger
         if (!strlen($octets)) {
             throw new \InvalidArgumentException('Empty octets.');
         }
-        return new self(gmp_import($octets, 1, GMP_MSW_FIRST | GMP_BIG_ENDIAN));
+        return new self( \gmp_import($octets, 1, GMP_MSW_FIRST | GMP_BIG_ENDIAN));
     }
 
     /**
@@ -94,11 +94,11 @@ class BigInteger
         if ($neg) {
             $octets = ~$octets;
         }
-        $num = gmp_import($octets, 1, GMP_MSW_FIRST | GMP_BIG_ENDIAN);
+        $num = \gmp_import($octets, 1, GMP_MSW_FIRST | GMP_BIG_ENDIAN);
         // negative, apply addition of two's complement and produce negative result
         if ($neg) 
         {
-            $num = gmp_neg( gmp_add( $num, 1 ) );
+            $num = \gmp_neg( \gmp_add( $num, 1 ) );
         }
         return new self($num);
     }
@@ -109,7 +109,7 @@ class BigInteger
     public function base10(): string
     {
         if (!isset($this->_num)) {
-            $this->_num = gmp_strval($this->_gmp, 10);
+            $this->_num = \gmp_strval($this->_gmp, 10);
         }
         return $this->_num;
     }
@@ -131,7 +131,7 @@ class BigInteger
             {
                 throw new \RuntimeException('Integer underflow.');
             }
-            $this->_intNum = gmp_intval( $this->_gmp );
+            $this->_intNum = \gmp_intval( $this->_gmp );
         }
         return $this->_intNum;
     }
@@ -151,7 +151,7 @@ class BigInteger
      */
     public function unsignedOctets(): string
     {
-        return gmp_export($this->_gmp, 1, GMP_MSW_FIRST | GMP_BIG_ENDIAN);
+        return \gmp_export($this->_gmp, 1, GMP_MSW_FIRST | GMP_BIG_ENDIAN);
     }
 
     /**
@@ -159,7 +159,7 @@ class BigInteger
      */
     public function signedOctets(): string
     {
-        switch (gmp_sign($this->_gmp)) {
+        switch ( \gmp_sign($this->_gmp)) {
             case 1:
                 return $this->_signedPositiveOctets();
             case -1:
@@ -174,7 +174,7 @@ class BigInteger
      */
     private function _signedPositiveOctets(): string
     {
-        $bin = gmp_export($this->_gmp, 1, GMP_MSW_FIRST | GMP_BIG_ENDIAN);
+        $bin = \gmp_export($this->_gmp, 1, GMP_MSW_FIRST | GMP_BIG_ENDIAN);
         // if first bit is 1, prepend full zero byte to represent positive two's complement
         if (ord($bin[0]) & 0x80) {
             $bin = chr(0x00) . $bin;
@@ -187,20 +187,20 @@ class BigInteger
      */
     private function _signedNegativeOctets(): string
     {
-        $num = gmp_abs($this->_gmp);
+        $num = \gmp_abs($this->_gmp);
         // compute number of bytes required
         $width = 1;
         if ($num > 128) {
             $tmp = $num;
             do {
                 ++$width;
-                $tmp = gmp_div( $tmp, gmp_pow( 2, 8 ) );
+                $tmp = \gmp_div( $tmp, \gmp_pow( 2, 8 ) );
                 // $tmp >>= 8;
             } while ($tmp > 128);
         }
         // compute two's complement 2^n - x
-        $num = gmp_sub( gmp_pow('2', 8 * $width), $num );
-        $bin = gmp_export($num, 1, GMP_MSW_FIRST | GMP_BIG_ENDIAN);
+        $num = \gmp_sub( \gmp_pow('2', 8 * $width), $num );
+        $bin = \gmp_export( $num, 1, GMP_MSW_FIRST | GMP_BIG_ENDIAN );
         // if first bit is 0, prepend full inverted byte to represent negative two's complement
         if (!(ord($bin[0]) & 0x80)) {
             $bin = chr(0xff) . $bin;
@@ -215,7 +215,7 @@ class BigInteger
     {
         static $gmp;
         if (!isset($gmp)) {
-            $gmp = gmp_init(PHP_INT_MAX, 10);
+            $gmp = \gmp_init(PHP_INT_MAX, 10);
         }
         return $gmp;
     }
@@ -227,7 +227,7 @@ class BigInteger
     {
         static $gmp;
         if (!isset($gmp)) {
-            $gmp = gmp_init(PHP_INT_MIN, 10);
+            $gmp = \gmp_init(PHP_INT_MIN, 10);
         }
         return $gmp;
     }
