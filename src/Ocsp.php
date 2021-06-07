@@ -18,25 +18,25 @@ use Ocsp\Asn1\UniversalTagID;
 use Ocsp\Exception\Asn1DecodingException;
 use Ocsp\Exception\ResponseException;
 
-const ERR_SUCCESS = 0;
-const ERR_MALFORMED_ASN1 = 1;
-const ERR_INTERNAL_ERROR = 2;
-const ERR_TRY_LATER = 3;
-const ERR_SIG_REQUIRED = 5;
-const ERR_UNAUTHORIZED = 6;
-const ERR_UNSUPPORTED_VERSION = 12;
-const ERR_REQLIST_EMPTY = 13;
-const ERR_REQLIST_MULTI = 14;
-const ERR_UNSUPPORTED_EXT = 15;
-const ERR_UNSUPPORTED_ALG = 16;
-
-const CERT_STATUS_GOOD = 0;
-const CERT_STATUS_REVOKED = 1;
-const CERT_STATUS_UNKNOWN = 2;
-
 class Ocsp
 {
-    /**
+    const ERR_SUCCESS = 0;
+    const ERR_MALFORMED_ASN1 = 1;
+    const ERR_INTERNAL_ERROR = 2;
+    const ERR_TRY_LATER = 3;
+    const ERR_SIG_REQUIRED = 5;
+    const ERR_UNAUTHORIZED = 6;
+    const ERR_UNSUPPORTED_VERSION = 12;
+    const ERR_REQLIST_EMPTY = 13;
+    const ERR_REQLIST_MULTI = 14;
+    const ERR_UNSUPPORTED_EXT = 15;
+    const ERR_UNSUPPORTED_ALG = 16;
+    
+    const CERT_STATUS_GOOD = 0;
+    const CERT_STATUS_REVOKED = 1;
+    const CERT_STATUS_UNKNOWN = 2;
+    
+       /**
      * The media type (Content-Type header) to be used when sending the request to the OCSP Responder URL.
      *
      * @var string
@@ -206,17 +206,17 @@ class Ocsp
         }
         switch ( $responseStatus->getValue() ) 
         {
-            case ERR_SUCCESS:        // successful (Response has valid confirmations)
+            case self::ERR_SUCCESS:        // successful (Response has valid confirmations)
                 break;
-            case ERR_MALFORMED_ASN1: // malformedRequest (Illegal confirmation request)
+            case self::ERR_MALFORMED_ASN1: // malformedRequest (Illegal confirmation request)
                 throw ResponseException\MalformedRequestException::create();
-            case ERR_INTERNAL_ERROR: // internalError (Internal error in issuer)
+            case self::ERR_INTERNAL_ERROR: // internalError (Internal error in issuer)
                 throw ResponseException\InternalErrorException::create();
-            case ERR_TRY_LATER:      // tryLater (Try again later)
+            case self::ERR_TRY_LATER:      // tryLater (Try again later)
                 throw ResponseException\TryLaterException::create();
-            case ERR_SIG_REQUIRED:   // sigRequired (Must sign the request)
+            case self::ERR_SIG_REQUIRED:   // sigRequired (Must sign the request)
                 throw ResponseException\SigRequiredException::create();
-            case ERR_UNAUTHORIZED  : // unauthorized (Request unauthorized)
+            case self::ERR_UNAUTHORIZED  : // unauthorized (Request unauthorized)
                 throw ResponseException\UnauthorizedException::create();
             default:
                 throw Asn1DecodingException::create('Invalid response data');
