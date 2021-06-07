@@ -91,7 +91,7 @@ class CertificateInfo
         {
             $accessMethod = $accessDescription instanceof Sequence ? $accessDescription->getFirstChildOfType(UniversalTagID::OBJECT_IDENTIFIER) : null;
             /** @var ObjectIdentifier $accessMethod */
-            if ($accessMethod === null || $accessMethod->getIdentifier() !== caIssuers ) {
+            if ($accessMethod === null || $accessMethod->getIdentifier() !== \Ocsp\Ocsp::caIssuers ) {
                 continue;
             }
             /** @var Sequence $accessDescription */
@@ -152,7 +152,7 @@ class CertificateInfo
             /** @var Sequence $extension */
             $extnID = $extension->getFirstChildOfType(UniversalTagID::OBJECT_IDENTIFIER);
             /** @var ObjectIdentifier $extnID */
-            if ($extnID === null || $extnID->getIdentifier() !== authorityInfoAccess ) {
+            if ($extnID === null || $extnID->getIdentifier() !== \Ocsp\Ocsp::authorityInfoAccess ) {
                 continue;
             }
             /** @var OctetString */
