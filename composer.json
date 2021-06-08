@@ -1,5 +1,6 @@
 {
-    "name": "mlocati/ocsp",
+    "name": "ocsp/request",
+	"version": "1.0",
     "description": "Library to query HTTPS Certificates revocation status using the Online Certificate Status Protocol (OCSP)",
     "license": "MIT",
     "type": "library",
@@ -9,12 +10,18 @@
             "email": "michele@locati.it",
             "homepage" : "https://mlocati.github.io",
             "role" : "Author"
+        },
+        {
+            "name": "Bill Seddon",
+            "email": "bill.seddon@lyquidity.com",
+            "homepage" : "https://www.xbrlquery.com",
+            "role" : "Author"
         }
     ],
-    "homepage": "https://github.com/mlocati/ocsp/",
+    "homepage": "https://github.com/bseddon/ocsp/",
     "support": {
-	    "issues": "https://github.com/mlocati/ocsp/issues/",
-	    "source": "https://github.com/mlocati/ocsp/"
+	    "issues": "https://github.com/bseddon/ocsp/issues/",
+	    "source": "https://github.com/bseddon/ocsp/"
     },
     "minimum-stability": "stable",
     "prefer-stable": true,
@@ -22,11 +29,9 @@
         "sort-packages": true,
         "optimize-autoloader": true
     },
-    "autoload": {
-        "psr-4": {
-            "Ocsp\\": "src/"
-        }
-    },
+	"autoload": { 
+		"files": ["./src/autoload.php"] 
+	},
     "autoload-dev": {
         "psr-4": {
             "Ocsp\\Test\\": "test/tests/"
@@ -34,7 +39,7 @@
     },
     "require": {
         "php": ">=5.5.9",
-        "phpseclib/phpseclib": "^2.0"
+		"ext-gmp": ">=3.0.0"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^2.2",
@@ -46,6 +51,8 @@
     },
     "keywords": [
         "ocsp",
+		"request",
+		"rfc6069",
         "certificate",
         "https",
         "revoke",
