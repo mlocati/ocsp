@@ -1,6 +1,6 @@
-[![TravisCI Build Status](https://travis-ci.org/mlocati/ocsp.svg?branch=master)](https://travis-ci.org/mlocati/ocsp)
-
 # Online Certificate Status Protocol PHP Library
+
+This is a modified version of the OCSP repository by #mlocati.  The modifications are to support the project [OCSP responder](https://github.com/bseddon/ocsp-responder).  Amongst the changes are the addition of new ASN.1 tags and the removal of the dependency on [phpseclib](https://github.com/phpseclib/phpseclib).
 
 This repository contains a PHP library that helps you checking if HTTPS certificates are revoked, by using the Online Certificate Status Protocol (OCSP).
 
