@@ -22,7 +22,7 @@
 	    "issues": "https://github.com/bseddon/ocsp/issues/",
 	    "source": "https://github.com/bseddon/ocsp/"
     },
-    "minimum-stability": "dev",
+    "minimum-stability": "stable",
     "config": {
         "sort-packages": true,
         "optimize-autoloader": true
