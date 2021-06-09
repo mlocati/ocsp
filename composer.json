@@ -24,7 +24,6 @@
 	    "source": "https://github.com/bseddon/ocsp/"
     },
     "minimum-stability": "dev",
-    "prefer-stable": true,
     "config": {
         "sort-packages": true,
         "optimize-autoloader": true
