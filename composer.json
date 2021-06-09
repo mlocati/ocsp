@@ -1,6 +1,5 @@
 {
     "name": "ocsp/request",
-	"version": "1.0",
     "description": "Library to query HTTPS Certificates revocation status using the Online Certificate Status Protocol (OCSP)",
     "license": "MIT",
     "type": "library",
