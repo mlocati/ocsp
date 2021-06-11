@@ -242,7 +242,7 @@ class CertificateInfo
      *
      * @return string Empty string if not found
      */
-    protected function extractSubjectPublicKeyBytes(Sequence $certificate)
+    public function extractSubjectPublicKeyBytes(Sequence $certificate)
     {
         /** @var Sequence */
         $tbsCertificate = $certificate->getFirstChildOfType(UniversalTagID::SEQUENCE);
