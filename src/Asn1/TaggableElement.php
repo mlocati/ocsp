@@ -12,6 +12,8 @@ use Ocsp\Asn1\Element\OctetString;
 use Ocsp\Asn1\Element\RawConstructed;
 use Ocsp\Asn1\Element\RawPrimitive;
 use Ocsp\Asn1\Element\Sequence;
+use Ocsp\Asn1\Element\Set;
+use Ocsp\Asn1\Element\UTF8String;
 
 /**
  * Returns type of Sequence if Sequence or null
@@ -22,6 +24,19 @@ use Ocsp\Asn1\Element\Sequence;
 function asSequence( $element )
 {
     return  $element instanceof Sequence
+        ? $element 
+        : null;
+};
+
+/**
+ * Returns type of Set if Sequence or null
+ *
+ * @param Element $element
+ * @return Set
+ */
+function asSet( $element )
+{
+    return  $element instanceof Set
         ? $element 
         : null;
 };
@@ -113,6 +128,19 @@ function asGeneralizedTime( $element )
 function asBitString( $element )
 {
     return $element instanceof BitString
+        ? $element 
+        : null;
+};
+
+/**
+ * Returns type of UTF8String if UTF8String or null
+ *
+ * @param Element $element
+ * @return UTF8String
+ */
+function asUTF8String( $element )
+{
+    return $element instanceof UTF8String
         ? $element 
         : null;
 };
