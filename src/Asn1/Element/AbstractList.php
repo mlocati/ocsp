@@ -12,8 +12,6 @@ use Ocsp\Asn1\TaggableElement;
  */
 abstract class AbstractList extends TaggableElement
 {
-    // use TaggableElementTrait;
-
     /**
      * The child elements.
      *
@@ -149,31 +147,31 @@ abstract class AbstractList extends TaggableElement
         {
             if ( ! is_null( $typeID ) )
             {
-            $tag = $element instanceof TaggableElement ? $element->getTag() : null;
-            $actualTypeIDString = (string) ($tag === null ? $element->getTypeID() : $tag->getTagID());
+                $tag = $element instanceof TaggableElement ? $element->getTag() : null;
+                $actualTypeIDString = (string) ($tag === null ? $element->getTypeID() : $tag->getTagID());
                 if ($actualTypeIDString !== $typeIDString)
                 {
-                continue;
-            }
+                    continue;
+                }
 
-            $actualClass = $tag === null ? $element->getClass() : $tag->getClass();
+                $actualClass = $tag === null ? $element->getClass() : $tag->getClass();
                 if ($actualClass !== $class)
                 {
-                continue;
-            }
+                    continue;
+                }
 
                 if ($tagEnvironment === '')
                 {
                     if ($tag !== null) 
                     {
-                    continue;
-                }
+                        continue;
+                    }
                 } else 
                 {
-                if ($tag === null || $tag->getEnvironment() !== $tagEnvironment) {
-                    continue;
+                    if ($tag === null || $tag->getEnvironment() !== $tagEnvironment) {
+                        continue;
+                    }
                 }
-            }
             }
 
             ++$found;
