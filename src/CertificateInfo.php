@@ -15,6 +15,10 @@ use Ocsp\Asn1\Tag;
 use Ocsp\Asn1\UniversalTagID;
 use Ocsp\Exception\Asn1DecodingException;
 
+use function Ocsp\Asn1\asBitString;
+use function Ocsp\Asn1\asSequence;
+use function Ocsp\Asn1\asUTCTime;
+
 use const Ocsp\Asn1\authorityInfoAccess;
 use const Ocsp\Asn1\caIssuers;
 
@@ -182,7 +186,7 @@ class CertificateInfo
      * @see https://tools.ietf.org/html/rfc2459#section-4.1 for Certificate
      * @see https://tools.ietf.org/html/rfc5912#section-14 for CertificateSerialNumber
      */
-    protected function extractSerialNumber(Sequence $certificate)
+    public function extractSerialNumber(Sequence $certificate)
     {
         /** @var Sequence */
         $tbsCertificate = $certificate->getFirstChildOfType(UniversalTagID::SEQUENCE);
@@ -205,6 +209,33 @@ class CertificateInfo
      *
      * @param \Ocsp\Asn1\Element\Sequence $certificate
      *
+     * @return DateTime[] A pair of dates for start and end
+     *
+     * @see https://tools.ietf.org/html/rfc2459#section-4.1 for Certificate
+     */
+    public function extractDates(Sequence $certificate)
+    {
+        /** @var Sequence */
+        $tbsCertificate = $certificate->getFirstChildOfType(UniversalTagID::SEQUENCE);
+        if ($tbsCertificate === null) 
+        {
+            return null;
+        }
+        $seq = asSequence( $tbsCertificate->getNthChildOfType(3, UniversalTagID::SEQUENCE) );
+        if ( ! $seq ) return null;
+
+            $dates = array();
+            $dates['start'] = asUTCTime( $seq->at(1) )->getValue();
+            $dates['end']   = asUTCTime( $seq->at(2) )->getValue();
+
+        return $dates;
+    }
+
+    /**
+     * Extract the issuer sequence.
+     *
+     * @param \Ocsp\Asn1\Element\Sequence $certificate
+     *
      * @return Sequence Empty string if not found
      *
      * @see https://tools.ietf.org/html/rfc2459#section-4.1 for Certificate
@@ -218,7 +249,7 @@ class CertificateInfo
             return '';
         }
         return $tbsCertificate->getNthChildOfType(2, UniversalTagID::SEQUENCE) ?? '';
-        }
+    }
 
     /**
      * Extract the DER-encoded data of the issuer.
@@ -261,5 +292,50 @@ class CertificateInfo
         }
 
         return $subjectPublicKey->getBytes();
+    }
+
+    /**
+     * Extract the bytes of the public key of the subject included in the certificate.
+     *
+     * @param \Ocsp\Asn1\Element\Sequence $certificate
+     *
+     * @return string Empty string if not found
+     */
+    public function extractSubjectIdentifier( Sequence $certificate )
+    {
+        /** @var Sequence */
+        $tbsCertificate = $certificate->getFirstChildOfType(UniversalTagID::SEQUENCE);
+        if ($tbsCertificate === null) {
+            return '';
+        }
+        /** @var Sequence */
+        $extensionsContainer = $tbsCertificate->getFirstChildOfType( UniversalTagID::BIT_STRING, \Ocsp\Asn1\Element::CLASS_CONTEXTSPECIFIC, \Ocsp\Asn1\Tag::ENVIRONMENT_EXPLICIT );
+        if ($extensionsContainer === null) {
+            return '';
+        }
+
+        $subjectIdOID = \PKIX\OID::getOIDFromName('subjectKeyIdentifier');
+        foreach( $extensionsContainer->getElements() as $extension )
+        {
+            /** @var \Ocsp\Asn1\Element\Sequence $extension */
+            if ( ! $extension ) continue;
+            if ( ! ( $oid = \Ocsp\Asn1\asObjectIdentifier( $extension->at(1) ) ) || $oid->getIdentifier() != $subjectIdOID )
+                continue;
+
+            $octet = \Ocsp\Asn1\asOctetString( $extension->getFirstChildOfType( \Ocsp\Asn1\UniversalTagID::OCTET_STRING ) );
+            return $octet ? $octet->getValue() : '';
+        }
+    }
+
+    /**
+     * Returns the signature bytes
+     *
+     * @param \Ocsp\Asn1\Element\Sequence $certificate
+     * @return string
+     */
+    public function getSignatureBytes( Sequence $certificate )
+    {
+        $sig = asBitString( $certificate->getFirstChildOfType( UniversalTagID::BIT_STRING ) );
+        return $sig ? $sig->getBytes() : null;
     }
 }
