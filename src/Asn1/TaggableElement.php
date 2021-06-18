@@ -13,6 +13,7 @@ use Ocsp\Asn1\Element\RawConstructed;
 use Ocsp\Asn1\Element\RawPrimitive;
 use Ocsp\Asn1\Element\Sequence;
 use Ocsp\Asn1\Element\Set;
+use Ocsp\Asn1\Element\UTCTime;
 use Ocsp\Asn1\Element\UTF8String;
 
 /**
@@ -128,6 +129,19 @@ function asGeneralizedTime( $element )
 function asBitString( $element )
 {
     return $element instanceof BitString
+        ? $element 
+        : null;
+};
+
+/**
+ * Returns type of UTCTime if UTCTime or null
+ *
+ * @param Element $element
+ * @return UTCTime
+ */
+function asUTCTime( $element )
+{
+    return $element instanceof UTCTime
         ? $element 
         : null;
 };
