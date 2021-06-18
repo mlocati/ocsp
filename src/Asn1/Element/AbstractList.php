@@ -193,20 +193,29 @@ abstract class AbstractList extends TaggableElement
      *
      * @return \Ocsp\Asn1\Element|null
      */
-    public function getNthUntaggedChild($position, $class)
+    public function getNthUntaggedChild($position, $class, $typeID = null )
     {
         $found = 0;
-        foreach ($this->getElements() as $element) {
-            if ($element instanceof TaggableElement) {
-                if ($element->getTag() !== null) {
+        foreach ($this->getElements() as $element) 
+        {
+            if ($element instanceof TaggableElement) 
+            {
+                if ($element->getTag() !== null) 
+                {
                     continue;
                 }
             }
-            if ($element->getClass() !== $class) {
+            if ($element->getClass() !== $class) 
+            {
+                continue;
+            }
+            if ( ! is_null( $typeID ) && $element->getTypeID() != $typeID )
+            {
                 continue;
             }
             ++$found;
-            if ($found === $position) {
+            if ($found === $position) 
+            {
                 return $element;
             }
         }
