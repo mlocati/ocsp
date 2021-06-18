@@ -18,6 +18,10 @@ use Ocsp\Asn1\UniversalTagID;
 use Ocsp\Exception\Asn1DecodingException;
 use Ocsp\Exception\ResponseException;
 
+use function Ocsp\Asn1\asObjectIdentifier;
+use function Ocsp\Asn1\asOctetString;
+use function Ocsp\Asn1\asSequence;
+
 class Ocsp
 {
     const ERR_SUCCESS = 0;
@@ -61,6 +65,179 @@ class Ocsp
     const authorityInfoAccess = '1.3.6.1.5.5.7.1.1';
     const caIssuers = '1.3.6.1.5.5.7.48.2';
     const sha256WithRSAEncryption = '1.2.840.113549.1.1.11';
+
+    /**
+     * Parse the certificate to find the OCSP responder Url and the issuer certificate
+     * @param string $path
+     * @return string[]
+     */
+    static function getCertificateFromFile( $path )
+    {
+        $certificateLoader = new \Ocsp\CertificateLoader();
+        $certificate = $certificate = $certificateLoader->fromFile( $path );
+
+        return self::getCertificate( $certificate );
+    }
+
+    /**
+     * Parse the certificate to find the OCSP responder Url and the issuer certificate
+     * @param Sequence $certificate
+     * @return string[]
+     */
+    static function getCertificate( $certificate, $issuerCertificate = null )
+    {
+        $result = array();
+
+        $result['cert'] = $certificate;
+        $result['certificateInfo'] = $certificateInfo = new \Ocsp\CertificateInfo();
+        $urlOfIssuerCertificate = $certificateInfo->extractIssuerCertificateUrl( $certificate );
+        $result['ocspResponderUrl'] = $certificateInfo->extractOcspResponderUrl( $certificate );
+        $result['issuerBytes'] = $issuerBytes = $issuerCertificate ? (new DerEncoder())->encodeElement( $issuerCertificate ) : file_get_contents( $urlOfIssuerCertificate );
+        $certificateLoader = new \Ocsp\CertificateLoader();
+        $result['issuerCertificate'] = $issuerCertificate ? $issuerCertificate : $certificateLoader->fromString( $issuerBytes );
+        return $result;
+    }
+
+    /**
+     * Checks that the subject certificate is signed by the issuer certificate
+     *
+     * @param Sequence $subjectCertificate
+     * @param Sequence $issuerCertificate If the issuer certificate is not provided it will be retrieve on the path found in the subject certificate
+     * @return bool
+     * @throws \Exception If there is a problem validating the certificate
+     */
+    static function validateCertificate( Sequence $subjectCertificate, Sequence $issuerCertificate = null )
+    {
+        $certificateInfo = new \Ocsp\CertificateInfo();
+        if ( $issuerCertificate )
+        {
+            // Convert the Sequence to a PEM so the OpenSSL function will use it
+            $issuerCertificate = self::PEMize( (new DerEncoder())->encodeElement( $issuerCertificate) );
+        }
+        else
+        {
+            $issuerUrl = $certificateInfo->extractIssuerCertificateUrl( $subjectCertificate );
+            if ( ! $issuerUrl )
+                throw new \Exception('The issuer certificate has not been provided and a url to the certificate is not in the subject certificate');
+
+            if ( ! openssl_x509_export( file_get_contents( $issuerUrl ), $issuerCertificate ) )
+                throw new \Exception( sprintf( 'Unable to access the issuer certificate at the supplied location: \'%s\'', $issuerUrl ) );
+            // $issuerCertificate = self::PEMize( self::pem2der( file_get_contents( $issuerUrl ) ) );
+        }
+
+        // Get the subject's signature
+        $signatureBytes = $certificateInfo->getSignatureBytes( $subjectCertificate );
+        if ( ! $signatureBytes )
+            throw new \Exception('Unable to retrieve the encrypted signature from the subject certificate');
+        
+        // The issuer's public key is needed to decode the subject signature
+        $issuerPublicKey = openssl_pkey_get_public( $issuerCertificate );
+        if ( openssl_public_decrypt( $signatureBytes, $decryptedSignature, $issuerPublicKey ) === false )
+            throw new \Exception('Unable to decrypt the subject signature using the issuer public key');
+
+        // Being able to decrypt the signature is probably good enough proof but confirming the hashes are the same makes sure the signer certificate is unchanged
+
+        // Access the algorithm and TBS hash from the decoded signature
+        $signature = asSequence( (new DerDecoder())->decodeElement( $decryptedSignature ) );
+        $hashOID = asObjectIdentifier( $signature->at(1)->asSequence()->at(1) );
+        $hashName = \Ocsp\Ocsp::OID2Name[ $hashOID->getIdentifier() ];
+
+        // The hash computed by the issuer is in the signature
+        $signatureHash = asOctetString( $signature->at(2) );
+    
+        // Create a hash of the subject's TBS
+        $tbs = (new DerEncoder())->encodeElement( $subjectCertificate->at(1) );
+        // And compare it with the one in the signature
+        if ( bin2hex( $signatureHash->getValue() ) != hash( $hashName, $tbs ) )
+            throw new \Exception('');
+     
+        return true;
+    }
+
+    /**
+     * Send a request to an OCSP server
+     *
+     * @param \Ocsp\Asn1\Element\Sequence $certificate
+	 * @param string $caBundlePath (optional: path to the location of a bundle of trusted CA certificates)
+     * @return bool
+     */
+    static function sendRequest( $certificate, $issuerCertificate = null, $caBundlePath = null )
+    {
+        list( $certificate, $certificateInfo, $ocspResponderUrl, $issuerCertBytes, $issuerCertificate ) = array_values( \Ocsp\Ocsp::getCertificate( $certificate, $issuerCertificate ) );
+
+        /** @var \Ocsp\CertificateInfo $certificateInfo */
+        /** @var \Ocsp\Asn1\Element\Sequence $certificate */
+        /** @var \Ocsp\Asn1\Element\Sequence $issuerCertificate */
+
+        // Extract the relevant data from the two certificates
+        $requestInfo = $certificateInfo->extractRequestInfo($certificate, $issuerCertificate);
+
+        // Build the raw body to be sent to the OCSP Responder URL
+        $ocsp = new \Ocsp\Ocsp();
+        $requestBody = $ocsp->buildOcspRequestBodySingle($requestInfo);
+        // $b64 = base64_encode( $requestBody );
+
+        // Actually call the OCSP Responder URL (here we use cURL, you can use any library you prefer)
+        // For a simple debug option use the address of an OpenSSL 
+        $result = \Ocsp\Ocsp::doRequest( $ocspResponderUrl, $requestBody, \Ocsp\Ocsp::OCSP_REQUEST_MEDIATYPE, \Ocsp\Ocsp::OCSP_RESPONSE_MEDIATYPE, $caBundlePath );
+
+        $resultB64 = base64_encode( $result );
+        // Decode the raw response from the OCSP Responder.  It will throw an error if the ASN 
+        // is invalid or the signature is not correct.  Otherwise its necessary to check the 
+        // decoded response.
+        $response = $ocsp->decodeOcspResponseSingle( $result, $issuerCertBytes );
+        return;
+    }
+
+    /**
+     * Send a request to an OCSP server
+     *
+     * @param string $path
+	 * @param string $caBundlePath (optional: path to the location of a bundle of trusted CA certificates)
+     * @return bool
+     */
+    static function sendRequestForFile( $path, $caBundlePath = null )
+    {
+        $certificateLoader = new \Ocsp\CertificateLoader();
+        $certificate = $certificate = $certificateLoader->fromFile( $path );
+
+        return self::sendRequest( $certificate, $caBundlePath );
+    }
+
+    /**
+	 * Issue a request to the url passing the body
+	 *
+	 * @param string $ocspResponderUrl
+	 * @param string $requestBody
+	 * @return string
+	 */
+	static function doRequest( $tsaUrl, $requestBody, $requestType, $responseType, $caBundlePath = null )
+	{
+		$caBundlePath = $caBundlePath ?? __DIR__ . '/cacerts-for-php-curl/cacerts.pem';
+
+		$hCurl = curl_init( );
+		curl_setopt_array($hCurl, [
+			CURLOPT_URL => $tsaUrl,
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_POST => true,
+			CURLOPT_HTTPHEADER => ['Content-Type: ' . $requestType],
+			CURLOPT_POSTFIELDS => $requestBody,
+			// CURLOPT_CAINFO => $caBundlePath,
+		] );
+		$result = curl_exec($hCurl);
+		$info = curl_getinfo($hCurl);
+		if ($info['http_code'] !== 200) 
+		{
+			throw new \RuntimeException("Whoops, here we'd expect a 200 HTTP code");
+		}
+
+		if ( $info['content_type'] !== $responseType )
+		{
+			throw new \RuntimeException("Whoops, the Content-Type header of the response seems wrong!");
+		}
+
+		return $result;
+	}
 
     /**
      * The media type (Content-Type header) to be used when sending the request to the OCSP Responder URL.
@@ -417,12 +594,28 @@ class Ocsp
 	 *
 	 * @return string data in PEM format
 	 */
-    private static function PEMize( $data, $type )
+    public static function PEMize( $data, $type = 'CERTIFICATE' )
 	{
 		return "-----BEGIN $type-----\r\n"
 		. chunk_split(base64_encode($data))
 		. "-----END $type-----\r\n";
 	}
+
+    /**
+     * Opposite of PEMize
+     *
+     * @param string $pem_data
+     * @return string A string of binary data
+     */
+    static function pem2der( $pem_data )
+    {
+        $begin = "CERTIFICATE-----";
+        $end   = "-----END";
+        $pem_data = substr( $pem_data, strpos( $pem_data, $begin ) + strlen( $begin ) );   
+        $pem_data = substr( $pem_data, 0, strpos( $pem_data, $end ) );
+        $der = base64_decode($pem_data);
+        return $der;
+     }
 
 	/** @name Signature Verification
 	 *
@@ -435,13 +628,6 @@ class Ocsp
 		if (strpos($cert, '-----BEGIN CERTIFICATE-----') !== 0) {
 			$c = self::PEMize($cert, 'CERTIFICATE');
 		}
-
-        // file_put_contents('c:/requester.txt',
-		// 	chunk_split( base64_encode( $data ) ) . "\n\n" .
-		// 	chunk_split( base64_encode( $signature ) ) . "\n\n" . 
-		// 	$hashAlg . "\n\n" .
-        //     $c 
-		// );
 
 		return openssl_verify($data, $signature, $c, $hashAlg);
 	}
