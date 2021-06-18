@@ -35,6 +35,13 @@ class BigInteger
     private $_intNum;
 
     /**
+     * A count of the number of leading zeros.  Can happen serial numbers.
+     *
+     * @var integer
+     */
+    private $_leadingZeros =  0;
+
+    /**
      * Constructor.
      *
      * @param \GMP|int|string $num Integer number in base $base
@@ -45,6 +52,13 @@ class BigInteger
         // convert to GMP object
         if ( ! ( $num instanceof \GMP) ) 
         {
+            if ( strlen( $num ) > 1 )
+            {
+                while( ord( $num[ $this->_leadingZeros ] ) == 0 )
+                {
+                    $this->_leadingZeros++;
+                }
+            }
             $gmp = @\gmp_import( $num );
             if ( false === $gmp ) 
             {
@@ -151,7 +165,8 @@ class BigInteger
      */
     public function unsignedOctets(): string
     {
-        return \gmp_export($this->_gmp, 1, GMP_MSW_FIRST | GMP_BIG_ENDIAN);
+        $leadingZeros = $this->_leadingZeros ? str_pad('', $this->_leadingZeros, chr(0) ) : '';
+        return $leadingZeros . \gmp_export($this->_gmp, 1, GMP_MSW_FIRST | GMP_BIG_ENDIAN);
     }
 
     /**
