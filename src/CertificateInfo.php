@@ -16,6 +16,7 @@ use Ocsp\Asn1\UniversalTagID;
 use Ocsp\Exception\Asn1DecodingException;
 
 use function Ocsp\Asn1\asBitString;
+use function Ocsp\Asn1\asObjectIdentifier;
 use function Ocsp\Asn1\asSequence;
 use function Ocsp\Asn1\asUTCTime;
 
@@ -337,5 +338,59 @@ class CertificateInfo
     {
         $sig = asBitString( $certificate->getFirstChildOfType( UniversalTagID::BIT_STRING ) );
         return $sig ? $sig->getBytes() : null;
+    }
+
+    public function getDNString( Sequence $certificate )
+    {
+        $issuer = $this->extractIssuer( $certificate );
+        $names = array();
+        foreach( $issuer->getElements() as $dnSet )
+        {
+            /** @var Set $dnSet */
+            $component = asSequence( $dnSet->at(1) );
+            if ( !$component ) continue;
+        
+            $oid = asObjectIdentifier( $component->getFirstChildOfType( \Ocsp\Asn1\UniversalTagID::OBJECT_IDENTIFIER ) );
+            if ( ! $oid ) continue;
+        
+            $componentValue = \Ocsp\Asn1\asPrintableString( $component->at(2) );
+            if ( ! $componentValue ) continue;
+        
+            $oidNumber = $oid->getIdentifier();
+            $value = $componentValue->getValue();
+        
+            switch( $oidNumber )
+            {
+                case "2.5.4.3":  // "commonName",
+                    $names[] = "CN=$value";
+                    break;
+        
+                case "2.5.4.5":  // "serialNumber"
+                    $names[] = "SERIALNUMBER=$value";
+                    break;
+        
+                case "2.5.4.6":  // "countryName"
+                    $names[] = "C=$value";
+                    break;
+        
+                case "2.5.4.7":  // "localityName"
+                    $names[] = "L=$value";
+                    break;
+            
+                case "2.5.4.8":  // "stateOrProvinceName"
+                    $names[] = "S=$value";
+                    break;
+        
+                case "2.5.4.10": // "organizationName"
+                    $names[] = "O=$value";
+                    break;
+        
+                case "2.5.4.11": // "organizationalUnitName",
+                    $names[] = "OU=$value";
+                    break;
+            }
+        }
+        
+        return join( ', ', array_reverse( $names ) );
     }
 }
