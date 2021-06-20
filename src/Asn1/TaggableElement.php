@@ -9,6 +9,7 @@ use Ocsp\Asn1\Element\GeneralizedTime;
 use Ocsp\Asn1\Element\Integer;
 use Ocsp\Asn1\Element\ObjectIdentifier;
 use Ocsp\Asn1\Element\OctetString;
+use Ocsp\Asn1\Element\PrintableString;
 use Ocsp\Asn1\Element\RawConstructed;
 use Ocsp\Asn1\Element\RawPrimitive;
 use Ocsp\Asn1\Element\Sequence;
@@ -181,6 +182,19 @@ function asEnumerated( $element )
 function asRawConstructed( $element )
 {
     return $element instanceof RawConstructed
+        ? $element 
+        : null;
+};
+
+/**
+ * Returns type of PrintableString if PrintableString or null
+ *
+ * @param Element $element
+ * @return PrintableString
+ */
+function asPrintableString( $element )
+{
+    return $element instanceof PrintableString
         ? $element 
         : null;
 };
