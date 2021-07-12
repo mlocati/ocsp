@@ -9,6 +9,7 @@ use Ocsp\Asn1\Element\BitString;
 use Ocsp\Asn1\Element\Integer;
 use Ocsp\Asn1\Element\ObjectIdentifier;
 use Ocsp\Asn1\Element\OctetString;
+use Ocsp\Asn1\Element\PrintableString;
 use Ocsp\Asn1\Element\RawPrimitive;
 use Ocsp\Asn1\Element\Sequence;
 use Ocsp\Asn1\Tag;
@@ -253,6 +254,26 @@ class CertificateInfo
     }
 
     /**
+     * Extract the subject sequence.
+     *
+     * @param \Ocsp\Asn1\Element\Sequence $certificate
+     *
+     * @return Sequence Empty string if not found
+     *
+     * @see https://tools.ietf.org/html/rfc2459#section-4.1 for Certificate
+     */
+    public function extractSubject(Sequence $certificate)
+    {
+        /** @var Sequence */
+        $tbsCertificate = $certificate->getFirstChildOfType(UniversalTagID::SEQUENCE);
+        if ($tbsCertificate === null) 
+        {
+            return '';
+        }
+        return $tbsCertificate->getNthChildOfType(4, UniversalTagID::SEQUENCE) ?? '';
+    }
+
+    /**
      * Extract the DER-encoded data of the issuer.
      *
      * @param \Ocsp\Asn1\Element\Sequence $certificate
@@ -340,10 +361,17 @@ class CertificateInfo
         return $sig ? $sig->getBytes() : null;
     }
 
-    public function getDNString( Sequence $certificate )
+    /**
+     * Generates a human readable DN string
+     *
+     * @param Sequence $certificate
+     * @param boolean $useIssuer True if the string is to be generated for the issuer.  False (default) if the subject.
+     * @return string
+     */
+    public function getDNString( Sequence $certificate, $useIssuer = false )
     {
-        $issuer = $this->extractIssuer( $certificate );
-        $names = array();
+        $issuer = $useIssuer ? $this->extractIssuer( $certificate ) : $this->extractSubject( $certificate );
+        $names = array(); 
         foreach( $issuer->getElements() as $dnSet )
         {
             /** @var Set $dnSet */
@@ -352,8 +380,10 @@ class CertificateInfo
         
             $oid = asObjectIdentifier( $component->getFirstChildOfType( \Ocsp\Asn1\UniversalTagID::OBJECT_IDENTIFIER ) );
             if ( ! $oid ) continue;
-        
-            $componentValue = \Ocsp\Asn1\asPrintableString( $component->at(2) );
+
+            // $componentValue = \Ocsp\Asn1\asPrintableString( $component->at(2) );
+            /** @var PrintableString $componentValue */
+            $componentValue = $component->at(2);
             if ( ! $componentValue ) continue;
         
             $oidNumber = $oid->getIdentifier();
@@ -364,29 +394,45 @@ class CertificateInfo
                 case "2.5.4.3":  // "commonName",
                     $names[] = "CN=$value";
                     break;
-        
+
+                case "2.5.4.4":  // "surname",
+                    $names[] = "SN=$value";
+                    break;
+
                 case "2.5.4.5":  // "serialNumber"
                     $names[] = "SERIALNUMBER=$value";
                     break;
-        
+
                 case "2.5.4.6":  // "countryName"
                     $names[] = "C=$value";
                     break;
-        
+
                 case "2.5.4.7":  // "localityName"
                     $names[] = "L=$value";
                     break;
-            
+
                 case "2.5.4.8":  // "stateOrProvinceName"
                     $names[] = "S=$value";
                     break;
-        
+
                 case "2.5.4.10": // "organizationName"
                     $names[] = "O=$value";
                     break;
-        
+
                 case "2.5.4.11": // "organizationalUnitName",
                     $names[] = "OU=$value";
+                    break;
+
+                case "2.5.4.12": // "title",
+                    $names[] = "T=$value";
+                    break;
+
+                case "2.5.4.42": // "givenName",
+                    $names[] = "G=$value";
+                    break;
+
+                case "1.2.840.113549.1.9.1": // emailAddress
+                    $names[] = "E=$value";
                     break;
             }
         }
