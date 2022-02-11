@@ -99,7 +99,7 @@ abstract class AbstractList implements TaggableElement
     /**
      * Find the first child of a specific type.
      *
-     * @param int|string|\phpseclib\Math\BigInteger $typeID
+     * @param int|string|\Ocsp\BigInteger $typeID
      * @param string $class
      * @param string $tagEnvironment
      *
@@ -114,7 +114,7 @@ abstract class AbstractList implements TaggableElement
      * Find the Nth child of a specific type.
      *
      * @param int $position
-     * @param int|string|\phpseclib\Math\BigInteger $typeID
+     * @param int|string|\Ocsp\BigInteger $typeID
      * @param string $class
      * @param string $tagEnvironment
      *

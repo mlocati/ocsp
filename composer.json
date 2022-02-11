@@ -25,7 +25,8 @@
     "autoload": {
         "psr-4": {
             "Ocsp\\": "src/"
-        }
+        },
+        "files": ["assets/autoloader.php"]
     },
     "autoload-dev": {
         "psr-4": {
@@ -34,11 +35,12 @@
     },
     "require": {
         "php": ">=5.5.9",
-        "phpseclib/phpseclib": "^2.0"
+        "phpseclib/phpseclib": "^2.0 || ^3.0"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^2.2",
-        "phpunit/phpunit": "^4.8 || ^5.7 || ^6.5 || ^7.4 || ^8.2"
+        "phpunit/phpunit": "^4.8 || ^5.7 || ^6.5 || ^7.4 || ^8.2",
+        "ext-curl": "*"
     },
     "scripts": {
 	    "codestyle": "php-cs-fixer fix --path-mode=intersection --config=.php_cs.dist",

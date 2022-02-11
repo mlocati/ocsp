@@ -38,7 +38,7 @@ interface Element
     /**
      * Get the type ID.
      *
-     * @return int|string|\phpseclib\Math\BigInteger
+     * @return int|string|\Ocsp\BigInteger
      */
     public function getTypeID();
 

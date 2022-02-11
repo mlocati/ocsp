@@ -21,7 +21,7 @@ class RawConstructed extends AbstractList
     /**
      * The decoded type ID.
      *
-     * @var int|string|\phpseclib\Math\BigInteger
+     * @var int|string|\Ocsp\BigInteger
      */
     private $typeID;
 
@@ -36,7 +36,7 @@ class RawConstructed extends AbstractList
      * Create a new instance.
      *
      * @param string $encoding the handle of the encoding
-     * @param int|string|\phpseclib\Math\BigInteger $typeID
+     * @param int|string|\Ocsp\BigInteger $typeID
      * @param string $class the class (the value of one of the Element::CLASS_... constants)
      * @param \Ocsp\Asn1\Element[] $elements
      *

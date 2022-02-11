@@ -28,7 +28,7 @@ interface Encoder
     /**
      * Encode the value of an INTEGER element.
      *
-     * @param int|string|\phpseclib\Math\BigInteger $value
+     * @param int|string|\Ocsp\BigInteger $value
      *
      * @return string
      */

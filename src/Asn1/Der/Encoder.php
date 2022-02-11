@@ -10,7 +10,7 @@ use Ocsp\Asn1\Encoder as EncoderInterface;
 use Ocsp\Asn1\Tag;
 use Ocsp\Asn1\TaggableElement;
 use Ocsp\Exception\Asn1EncodingException;
-use phpseclib\Math\BigInteger;
+use Ocsp\BigInteger;
 
 /**
  * Encoder from ASN.1 to DER.
@@ -205,7 +205,7 @@ class Encoder implements EncoderInterface
     /**
      * Encode the type ID.
      *
-     * @param int|string|\phpseclib\Math\BigInteger $typeID the type ID
+     * @param int|string|\Ocsp\BigInteger $typeID the type ID
      * @param string $class the class (the value of one of the Element::CLASS_... constants)
      * @param bool $isConstructed is the element a constructed element?
      *
@@ -282,7 +282,7 @@ class Encoder implements EncoderInterface
     /**
      * Get the bits representing a number.
      *
-     * @param int|string|\phpseclib\Math\BigInteger $number
+     * @param int|string|\Ocsp\BigInteger $number
      *
      * @return string
      */

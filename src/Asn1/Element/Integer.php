@@ -15,14 +15,14 @@ class Integer implements TaggableElement
     use TaggableElementTrait;
 
     /**
-     * @var int|string|\phpseclib\Math\BigInteger
+     * @var int|string|\Ocsp\BigInteger
      */
     private $value;
 
     /**
      * Create a new instance.
      *
-     * @param int|string|\phpseclib\Math\BigInteger $value
+     * @param int|string|\Ocsp\BigInteger $value
      *
      * @return static
      */
@@ -64,7 +64,7 @@ class Integer implements TaggableElement
     }
 
     /**
-     * @return int|string|\phpseclib\Math\BigInteger
+     * @return int|string|\Ocsp\BigInteger
      */
     public function getValue()
     {
@@ -72,7 +72,7 @@ class Integer implements TaggableElement
     }
 
     /**
-     * @param \phpseclib\Math\BigInteger|int|string $value
+     * @param \Ocsp\BigInteger|int|string $value
      *
      * @return $this
      */

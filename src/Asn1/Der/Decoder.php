@@ -20,7 +20,7 @@ use Ocsp\Asn1\Tag;
 use Ocsp\Asn1\TaggableElement;
 use Ocsp\Asn1\UniversalTagID;
 use Ocsp\Exception\Asn1DecodingException;
-use phpseclib\Math\BigInteger;
+use Ocsp\BigInteger;
 
 /**
  * Decoder from DER to ASN.1.
@@ -70,7 +70,7 @@ class Decoder implements DecoderInterface
     /**
      * Decode a CONSTRUCTED ASN.1 element.
      *
-     * @param int|\phpseclib\Math\BigInteger $typeID
+     * @param int|\Ocsp\BigInteger $typeID
      * @param string $class
      * @param string $encodedValue
      *
@@ -148,7 +148,7 @@ class Decoder implements DecoderInterface
      *
      * @throws \Ocsp\Exception\Asn1DecodingException
      *
-     * @return array<int|\phpseclib\Math\BigInteger, string, bool>
+     * @return array<int|\Ocsp\BigInteger, string, bool>
      */
     protected function decodeType($bytes, &$offset)
     {
@@ -269,7 +269,7 @@ class Decoder implements DecoderInterface
      *
      * @param string $bytes
      *
-     * @return int|\phpseclib\Math\BigInteger
+     * @return int|\Ocsp\BigInteger
      */
     protected function decodeInteger($bytes)
     {
