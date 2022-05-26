@@ -88,7 +88,7 @@ class PrintableString implements TaggableElement
     public function setValue($value)
     {
         $value = (string) $value;
-        if (!preg_match('/^[A-Za-z0-9 \'()+,\-.\/:=?]*$/', $value)) {
+        if (!preg_match('/^[A-Za-z0-9 &\'()+,\-.\/:=?]*$/', $value)) {
             throw InvalidAsn1Value::create('Invalid ASN.1 PrintableString value');
         }
         $this->value = (string) $value;
