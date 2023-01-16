@@ -143,7 +143,7 @@ abstract class AbstractList implements TaggableElement
                     continue;
                 }
             }
-            ++$found;
+            $found++;
             if ($found === $position) {
                 return $element;
             }
@@ -172,7 +172,7 @@ abstract class AbstractList implements TaggableElement
             if ($element->getClass() !== $class) {
                 continue;
             }
-            ++$found;
+            $found++;
             if ($found === $position) {
                 return $element;
             }
