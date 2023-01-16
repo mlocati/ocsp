@@ -1,4 +1,7 @@
-[![TravisCI Build Status](https://travis-ci.org/mlocati/ocsp.svg?branch=master)](https://travis-ci.org/mlocati/ocsp)
+[![Tests](https://github.com/mlocati/ocsp/actions/workflows/tests.yml/badge.svg)](https://github.com/mlocati/ocsp/actions?query=workflow%3A%22tests%22)
+[![Coverage Status](https://coveralls.io/repos/github/mlocati/ocsp/badge.svg?branch=master)](https://coveralls.io/github/mlocati/ocsp?branch=master)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/mlocati/ocsp/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/mlocati/ocsp/?branch=master)
+![Packagist Downloads](https://img.shields.io/packagist/dm/mlocati/ocsp)
 
 # Online Certificate Status Protocol PHP Library
 
