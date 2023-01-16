@@ -14,7 +14,7 @@ class ExtractCertificateInfoTest extends TestCase
     public function extractResponderUrlProvider()
     {
         return [
-            ['revoked1.crt', 'http://ocsp.int-x3.letsencrypt.org', 'http://cert.int-x3.letsencrypt.org/'],
+            ['revoked1.crt', 'http://r3.o.lencr.org', 'http://r3.i.lencr.org/'],
         ];
     }
 

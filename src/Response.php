@@ -22,63 +22,63 @@ class Response
      * @var int
      */
     const REVOCATIONREASON_KEYCOMPROMISE = 1;
-    
+
     /**
      * Certificate revocation reason: CA Compromise.
      *
      * @var int
      */
     const REVOCATIONREASON_CACOMPROMISE = 2;
-    
+
     /**
      * Certificate revocation reason: affiliation changed.
      *
      * @var int
      */
     const REVOCATIONREASON_AFFILIATIONCHANGED = 3;
-    
+
     /**
      * Certificate revocation reason: superseded.
      *
      * @var int
      */
     const REVOCATIONREASON_SUPERSEDED = 4;
-    
+
     /**
      * Certificate revocation reason: cessation of operation.
      *
      * @var int
      */
     const REVOCATIONREASON_CESSATIONOFOPERATION = 5;
-    
+
     /**
      * Certificate revocation reason: certificate hold.
      *
      * @var int
      */
     const REVOCATIONREASON_CERTIFICATEHOLD = 6;
-    
+
     /**
      * Certificate revocation reason: remove from CRL.
      *
      * @var int
      */
     const REVOCATIONREASON_REMOVEFROMCRL = 8;
-    
+
     /**
      * Certificate revocation reason: privilege withdrawn.
      *
      * @var int
      */
     const REVOCATIONREASON_PRIVILEGEWITHDRAWN = 9;
-    
+
     /**
      * Certificate revocation reason: AA compromise.
      *
      * @var int
      */
     const REVOCATIONREASON_AACOMPROMISE = 10;
-    
+
     /**
      * The most recent time at which the status being indicated is known by the responder to have been correct.
      *

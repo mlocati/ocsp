@@ -65,7 +65,7 @@ class Encoder implements EncoderInterface
                 return "\x00";
             }
             if ($value > 0) {
-                if (PHP_INT_SIZE === 4 || $value < 0xffffffff) {
+                if (PHP_INT_SIZE === 4 || $value < 0xFFFFFFFF) {
                     return ltrim(pack('N', $value), "\x00");
                 }
                 if (PHP_VERSION_ID >= 50603) {
@@ -268,7 +268,7 @@ class Encoder implements EncoderInterface
         $lengthHexLength = strlen($lengthHex);
         if (($lengthHexLength % 2) !== 0) {
             $lengthHex = '0' . $lengthHex;
-            ++$lengthHexLength;
+            $lengthHexLength++;
         }
         $lengthNumBytes = strlen($lengthHex) >> 1;
         $result = chr($lengthNumBytes | 0x80);

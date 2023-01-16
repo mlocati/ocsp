@@ -250,7 +250,7 @@ class Decoder implements DecoderInterface
             throw Asn1DecodingException::create();
         }
         $length = 0;
-        for ($i = 0; $i < $numLenghtBytes; ++$i) {
+        for ($i = 0; $i < $numLenghtBytes; $i++) {
             if (!isset($bytes[$offset])) {
                 throw Asn1DecodingException::create();
             }
@@ -341,7 +341,7 @@ class Decoder implements DecoderInterface
         $len = strlen($bytes);
         $chunkBits = '';
         $maxIntBits = PHP_INT_SIZE * 8 - 1;
-        for ($offset = 1; $offset < $len; ++$offset) {
+        for ($offset = 1; $offset < $len; $offset++) {
             $byte = ord($bytes[$offset]);
             $chunkBits .= str_pad(decbin($byte & 0b01111111), 7, '0', STR_PAD_LEFT);
             if (($byte & 0b10000000) === 0) {
