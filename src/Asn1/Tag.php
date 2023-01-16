@@ -31,7 +31,7 @@ class Tag
     /**
      * The tag ID.
      *
-     * @var int|string|\phpseclib\Math\BigInteger
+     * @var int|string|\phpseclib\Math\BigInteger|\phpseclib3\Math\BigInteger
      */
     private $tagID;
 
@@ -46,7 +46,7 @@ class Tag
      * Create a new instante.
      *
      * @param string $environment the tag envoronment (the value of one of the Tag::ENVIRONMENT_... class constants)
-     * @param int|string|\phpseclib\Math\BigInteger $tagID the tag ID
+     * @param int|string|\phpseclib\Math\BigInteger|\phpseclib3\Math\BigInteger $tagID the tag ID
      * @param string $class the class (the value of one of the Element::CLASS_... constants)
      */
     protected function __construct($environment, $tagID, $class)
@@ -69,7 +69,7 @@ class Tag
     /**
      * Get the tag ID.
      *
-     * @return int|string|\phpseclib\Math\BigInteger
+     * @return int|string|\phpseclib\Math\BigInteger|\phpseclib3\Math\BigInteger
      */
     public function getTagID()
     {
@@ -89,7 +89,7 @@ class Tag
     /**
      * Create a new IMPLICIT tag.
      *
-     * @param int|string|\phpseclib\Math\BigInteger $tagID the tag ID
+     * @param int|string|\phpseclib\Math\BigInteger|\phpseclib3\Math\BigInteger $tagID the tag ID
      * @param string $class the class (the value of one of the Element::CLASS_... constants)
      *
      * @return static
@@ -102,7 +102,7 @@ class Tag
     /**
      * Create a new EXPLICIT tag.
      *
-     * @param int|string|\phpseclib\Math\BigInteger $tagID the tag ID
+     * @param int|string|\phpseclib\Math\BigInteger|\phpseclib3\Math\BigInteger $tagID the tag ID
      * @param string $class the class (the value of one of the Element::CLASS_... constants)
      *
      * @return static

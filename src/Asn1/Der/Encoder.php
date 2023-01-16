@@ -10,7 +10,7 @@ use Ocsp\Asn1\Encoder as EncoderInterface;
 use Ocsp\Asn1\Tag;
 use Ocsp\Asn1\TaggableElement;
 use Ocsp\Exception\Asn1EncodingException;
-use phpseclib\Math\BigInteger;
+use Ocsp\Service\Math;
 
 /**
  * Encoder from ASN.1 to DER.
@@ -72,9 +72,9 @@ class Encoder implements EncoderInterface
                     return ltrim(pack('J', $value), "\x00");
                 }
             }
-            $value = new BigInteger((string) $value);
+            $value = Math::createBigInteger((string) $value);
         } elseif (is_string($value)) {
-            $value = new BigInteger($value);
+            $value = Math::createBigInteger($value);
         }
 
         return $value->toBytes(true);
@@ -187,7 +187,7 @@ class Encoder implements EncoderInterface
             }
             $bits = decbin($int);
         } else {
-            $bits = (new BigInteger($part))->toBits();
+            $bits = Math::createBigInteger($part)->toBits();
         }
         do {
             array_unshift($bytes, bindec(substr($bits, -7)));
@@ -205,7 +205,7 @@ class Encoder implements EncoderInterface
     /**
      * Encode the type ID.
      *
-     * @param int|string|\phpseclib\Math\BigInteger $typeID the type ID
+     * @param int|string|\phpseclib\Math\BigInteger|\phpseclib3\Math\BigInteger $typeID the type ID
      * @param string $class the class (the value of one of the Element::CLASS_... constants)
      * @param bool $isConstructed is the element a constructed element?
      *
@@ -282,7 +282,7 @@ class Encoder implements EncoderInterface
     /**
      * Get the bits representing a number.
      *
-     * @param int|string|\phpseclib\Math\BigInteger $number
+     * @param int|string|\phpseclib\Math\BigInteger|\phpseclib3\Math\BigInteger $number
      *
      * @return string
      */
@@ -299,7 +299,7 @@ class Encoder implements EncoderInterface
             if (strlen($number) < strlen((string) PHP_INT_MAX)) {
                 return decbin((int) $number);
             }
-            $number = new BigInteger($number);
+            $number = Math::createBigInteger($number);
         }
 
         return $number->toBits(true);

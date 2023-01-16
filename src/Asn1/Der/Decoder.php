@@ -20,7 +20,7 @@ use Ocsp\Asn1\Tag;
 use Ocsp\Asn1\TaggableElement;
 use Ocsp\Asn1\UniversalTagID;
 use Ocsp\Exception\Asn1DecodingException;
-use phpseclib\Math\BigInteger;
+use Ocsp\Service\Math;
 
 /**
  * Decoder from DER to ASN.1.
@@ -70,7 +70,7 @@ class Decoder implements DecoderInterface
     /**
      * Decode a CONSTRUCTED ASN.1 element.
      *
-     * @param int|\phpseclib\Math\BigInteger $typeID
+     * @param int|\phpseclib\Math\BigInteger|\phpseclib3\Math\BigInteger $typeID
      * @param string $class
      * @param string $encodedValue
      *
@@ -148,7 +148,7 @@ class Decoder implements DecoderInterface
      *
      * @throws \Ocsp\Exception\Asn1DecodingException
      *
-     * @return array<int|\phpseclib\Math\BigInteger, string, bool>
+     * @return array<int|\phpseclib\Math\BigInteger|\phpseclib3\Math\BigInteger, string, bool>
      */
     protected function decodeType($bytes, &$offset)
     {
@@ -182,7 +182,7 @@ class Decoder implements DecoderInterface
                 for ($i = 0; $i < $numTypeParts; $i++) {
                     $typeIDBits .= str_pad(decbin($typeParts[$i]), 7, '0', STR_PAD_LEFT);
                 }
-                $typeID = new BigInteger($typeIDBits, 2);
+                $typeID = Math::createBigInteger($typeIDBits, 2);
             } else {
                 $typeID = 0;
                 for ($i = $numTypeParts - 1; $i >= 0; $i--) {
@@ -269,7 +269,7 @@ class Decoder implements DecoderInterface
      *
      * @param string $bytes
      *
-     * @return int|\phpseclib\Math\BigInteger
+     * @return int|\phpseclib\Math\BigInteger|\phpseclib3\Math\BigInteger
      */
     protected function decodeInteger($bytes)
     {
@@ -292,7 +292,7 @@ class Decoder implements DecoderInterface
             }
         }
 
-        return new BigInteger($bytes, -256);
+        return Math::createBigInteger($bytes, -256);
     }
 
     /**
@@ -349,7 +349,7 @@ class Decoder implements DecoderInterface
                 if (strlen($chunkBits) <= $maxIntBits) {
                     $result .= (string) bindec($chunkBits);
                 } else {
-                    $result .= (new BigInteger($chunkBits, 2))->toString();
+                    $result .= Math::createBigInteger($chunkBits, 2)->toString();
                 }
                 $chunkBits = '';
             }
