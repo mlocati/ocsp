@@ -64,7 +64,7 @@ class Decoder implements DecoderInterface
         list($typeID, $class, $isConstructed) = $this->decodeType($bytes, $offset);
         $encodedValue = $this->extractEncodedValue($bytes, $offset);
 
-        return $isConstructed ? $this->decodeConstructed($typeID, $class, $encodedValue) : $this->decodePrimitive($typeID, $class, $encodedValue);
+        return $isConstructed ? $this->decodeConstructed($typeID, $class, $encodedValue) : $this->decodePrimitive(/** @scrutinizer ignore-type */ $typeID, $class, $encodedValue);
     }
 
     /**
@@ -148,7 +148,7 @@ class Decoder implements DecoderInterface
      *
      * @throws \Ocsp\Exception\Asn1DecodingException
      *
-     * @return array<int|\phpseclib\Math\BigInteger|\phpseclib3\Math\BigInteger, string, bool>
+     * @return array The first element is the type ID (int|\phpseclib\Math\BigInteger|\phpseclib3\Math\BigInteger), the second is the class (string), the third is true (if the type is constructed) or false (not constructed)
      */
     protected function decodeType($bytes, &$offset)
     {
@@ -300,7 +300,7 @@ class Decoder implements DecoderInterface
      *
      * @param string $bytes
      *
-     * @return string
+     * @return array The first element contains the bytes (a string), the second element the number of trailing bits (an integer)
      */
     protected function decodeBitString($bytes)
     {
