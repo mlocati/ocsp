@@ -24,7 +24,7 @@ class RawPrimitive implements TaggableElement
     /**
      * The decoded type ID.
      *
-     * @var int|string|\phpseclib\Math\BigInteger
+     * @var int|string|\phpseclib\Math\BigInteger|\phpseclib3\Math\BigInteger
      */
     private $typeID;
 
@@ -46,7 +46,7 @@ class RawPrimitive implements TaggableElement
      * Create a new instance.
      *
      * @param string $encoding the handle of the encoding
-     * @param int|string|\phpseclib\Math\BigInteger $typeID
+     * @param int|string|\phpseclib\Math\BigInteger|\phpseclib3\Math\BigInteger $typeID
      * @param string $class the class (the value of one of the Element::CLASS_... constants)
      * @param string $rawEncodedValue the not decoded bytes representing the value
      *
