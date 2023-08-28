@@ -158,7 +158,7 @@ class Ocsp
             throw Asn1DecodingException::create('Invalid response type');
         }
         $this->checkResponseStatus($ocspResponse);
-        $responseBytes = $ocspResponse->getFirstChildOfType('0', Element::CLASS_CONTEXTSPECIFIC, Tag::ENVIRONMENT_EXPLICIT);
+        $responseBytes = $ocspResponse->getFirstChildOfType(0, Element::CLASS_CONTEXTSPECIFIC, Tag::ENVIRONMENT_EXPLICIT);
         if (!$responseBytes instanceof Sequence) {
             throw ResponseException\MissingResponseBytesException::create();
         }
@@ -284,8 +284,11 @@ class Ocsp
         }
 
         $certificateSerialNumber = (string) $certID->getFirstChildOfType(UniversalTagID::INTEGER, Element::CLASS_UNIVERSAL)->getValue();
-        $thisUpdate = $singleResponse->getFirstChildOfType(UniversalTagID::GENERALIZEDTIME, Element::CLASS_UNIVERSAL)?->getValue();
-		$nextUpdate = $singleResponse->getFirstChildOfType('0', Element::CLASS_CONTEXTSPECIFIC, Tag::ENVIRONMENT_EXPLICIT)?->getValue();
+        $thisUpdate = $singleResponse->getFirstChildOfType(UniversalTagID::GENERALIZEDTIME, Element::CLASS_UNIVERSAL)->getValue();
+		$nextUpdate = $singleResponse->getFirstChildOfType(0, Element::CLASS_CONTEXTSPECIFIC, Tag::ENVIRONMENT_EXPLICIT);
+        if($nextUpdate != null){
+            $nextUpdate = $nextUpdate->getValue();
+        }
 
         $certStatus = isset($elements[1]) ? $elements[1] : null;
         if ($certStatus === null) {
@@ -305,7 +308,7 @@ class Ocsp
         }
         switch ($tagID) {
             case 0:
-                return Response::good($thisUpdate, $nextUpdate, $certificateSerialNumber);
+                return Response::good($thisUpdate, $certificateSerialNumber, $nextUpdate);
             case 1:
                 $revokedOn = null;
                 $revocationReason = Response::REVOCATIONREASON_UNSPECIFIED;
@@ -327,10 +330,10 @@ class Ocsp
                     throw Asn1DecodingException::create('Failed to find the revocation date/time');
                 }
 
-                return Response::revoked($thisUpdate, $certificateSerialNumber, $revokedOn, $revocationReason);
+                return Response::revoked($thisUpdate, $certificateSerialNumber, $revokedOn, $revocationReason, $nextUpdate);
             case 2:
             default:
-                return Response::unknown($thisUpdate, $nextUpdate, $certificateSerialNumber);
+                return Response::unknown($thisUpdate, $certificateSerialNumber, $nextUpdate);
         }
     }
 }
