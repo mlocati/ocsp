@@ -86,6 +86,13 @@ class Response
      */
     private $thisUpdate;
 
+	/**
+	 * The most recent time at which the status being indicated is known by the responder to have been correct.
+	 *
+	 * @var \DateTimeImmutable|null
+	 */
+	private $nextUpdate;
+
     /**
      * The serial number of the certificate.
      *
@@ -118,9 +125,10 @@ class Response
      * @param \DateTimeImmutable $thisUpdate
      * @param string $certificateSerialNumber
      */
-    protected function __construct(DateTimeImmutable $thisUpdate, $certificateSerialNumber)
+    protected function __construct(DateTimeImmutable $thisUpdate, ?DateTimeImmutable $nextUpdate, $certificateSerialNumber)
     {
         $this->thisUpdate = $thisUpdate;
+				$this->nextUpdate =  $nextUpdate;
         $this->certificateSerialNumber = $certificateSerialNumber;
     }
 
@@ -132,9 +140,9 @@ class Response
      *
      * @return static
      */
-    public static function good(DateTimeImmutable $thisUpdate, $certificateSerialNumber)
+    public static function good(DateTimeImmutable $thisUpdate, ?DateTimeImmutable $nextUpdate, $certificateSerialNumber)
     {
-        $result = new static($thisUpdate, $certificateSerialNumber);
+        $result = new static($thisUpdate, $nextUpdate, $certificateSerialNumber);
         $result->revoked = false;
 
         return $result;
@@ -149,9 +157,9 @@ class Response
      *
      * @return static
      */
-    public static function revoked(DateTimeImmutable $thisUpdate, $certificateSerialNumber, DateTimeImmutable $revokedOn, $revocationReason = self::REVOCATIONREASON_UNSPECIFIED)
+    public static function revoked(DateTimeImmutable $thisUpdate, ?DateTimeImmutable $nextUpdate, $certificateSerialNumber, DateTimeImmutable $revokedOn, $revocationReason = self::REVOCATIONREASON_UNSPECIFIED)
     {
-        $result = new static($thisUpdate, $certificateSerialNumber);
+        $result = new static($thisUpdate, $nextUpdate, $certificateSerialNumber);
         $result->revoked = true;
         $result->revokedOn = $revokedOn;
         $result->revocationReason = (int) $revocationReason;
@@ -167,9 +175,9 @@ class Response
      *
      * @return static
      */
-    public static function unknown(DateTimeImmutable $thisUpdate, $certificateSerialNumber)
+    public static function unknown(DateTimeImmutable $thisUpdate, ?DateTimeImmutable $nextUpdate, $certificateSerialNumber)
     {
-        $result = new static($thisUpdate, $certificateSerialNumber);
+        $result = new static($thisUpdate, $nextUpdate, $certificateSerialNumber);
 
         return $result;
     }
@@ -223,4 +231,15 @@ class Response
     {
         return $this->revocationReason;
     }
+
+	/**
+	 * The most recent time at which the status being indicated is known by the responder to have been correct.
+	 *
+	 * @var \DateTimeImmutable|null
+	 */
+	public function getNextUpdate()
+	{
+		return $this->nextUpdate;
+	}
+
 }
