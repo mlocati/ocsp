@@ -87,7 +87,7 @@ class Response
     private $thisUpdate;
 
 	/**
-	 * The most recent time at which the status being indicated is known by the responder to have been correct.
+	 * The time at which one should next check for a status change.
 	 *
 	 * @var \DateTimeImmutable|null
 	 */
@@ -233,7 +233,7 @@ class Response
     }
 
 	/**
-	 * The most recent time at which the status being indicated is known by the responder to have been correct.
+	 * The time at which one should next check for a status change.
 	 *
 	 * @var \DateTimeImmutable|null
 	 */
