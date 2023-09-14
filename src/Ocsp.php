@@ -286,7 +286,7 @@ class Ocsp
         $certificateSerialNumber = (string) $certID->getFirstChildOfType(UniversalTagID::INTEGER, Element::CLASS_UNIVERSAL)->getValue();
         $thisUpdate = $singleResponse->getFirstChildOfType(UniversalTagID::GENERALIZEDTIME, Element::CLASS_UNIVERSAL)->getValue();
         $nextUpdate = $singleResponse->getFirstChildOfType(0, Element::CLASS_CONTEXTSPECIFIC, Tag::ENVIRONMENT_EXPLICIT);
-        if ($nextUpdate != null) {
+        if ($nextUpdate !== null) {
             $nextUpdate = $nextUpdate->getValue();
         }
 
