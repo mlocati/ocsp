@@ -13,35 +13,11 @@ class RevocationTest extends TestCase
     /**
      * @return array[]
      */
-    public function localAssetProvider()
-    {
-        return [
-            ['revoked1.crt', 'revoked1.issuer.crt', true],
-        ];
-    }
-
-    /**
-     * @dataProvider localAssetProvider
-     *
-     * @param string $certificateFilename
-     * @param string $issuerCertificateFilename
-     * @param bool|null $expectedRevocation
-     */
-    public function testWithLocalAsset($certificateFilename, $issuerCertificateFilename, $expectedRevocation)
-    {
-        $certificateLoader = new CertificateLoader();
-        $certificate = $certificateLoader->fromFile(OCSP_TEST_DIR . '/assets/' . $certificateFilename);
-        $issuerCertificate = $certificateLoader->fromFile(OCSP_TEST_DIR . '/assets/' . $issuerCertificateFilename);
-        $this->checkRevocation($certificate, $issuerCertificate, $expectedRevocation);
-    }
-
-    /**
-     * @return array[]
-     */
     public function remoteCertificatesProvider()
     {
         return [
             ['https://www.google.com', false],
+            ['https://digicert-tls-ecc-p384-root-g5-revoked.chain-demos.digicert.com/', true]
         ];
     }
 
