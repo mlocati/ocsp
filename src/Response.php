@@ -86,12 +86,12 @@ class Response
      */
     private $thisUpdate;
 
-	/**
-	 * The time at which one should next check for a status change.
-	 *
-	 * @var \DateTimeImmutable|null
-	 */
-	private $nextUpdate;
+    /**
+     * The time at which one should next check for a status change.
+     *
+     * @var \DateTimeImmutable|null
+     */
+    private $nextUpdate;
 
     /**
      * The serial number of the certificate.
@@ -130,7 +130,7 @@ class Response
     {
         $this->thisUpdate = $thisUpdate;
         $this->certificateSerialNumber = $certificateSerialNumber;
-		$this->nextUpdate =  $nextUpdate;
+        $this->nextUpdate = $nextUpdate;
     }
 
     /**
@@ -235,14 +235,13 @@ class Response
         return $this->revocationReason;
     }
 
-	/**
-	 * The time at which one should next check for a status change.
-	 *
-	 * @var \DateTimeImmutable|null
-	 */
-	public function getNextUpdate()
-	{
-		return $this->nextUpdate;
-	}
-
+    /**
+     * The time at which one should next check for a status change.
+     *
+     * @var \DateTimeImmutable|null
+     */
+    public function getNextUpdate()
+    {
+        return $this->nextUpdate;
+    }
 }
