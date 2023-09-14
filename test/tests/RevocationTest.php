@@ -2,6 +2,7 @@
 
 namespace Ocsp\Test;
 
+use DateTimeImmutable;
 use Ocsp\Asn1\Element\Sequence;
 use Ocsp\CertificateInfo;
 use Ocsp\CertificateLoader;
@@ -13,35 +14,11 @@ class RevocationTest extends TestCase
     /**
      * @return array[]
      */
-    public function localAssetProvider()
-    {
-        return [
-            ['revoked1.crt', 'revoked1.issuer.crt', true],
-        ];
-    }
-
-    /**
-     * @dataProvider localAssetProvider
-     *
-     * @param string $certificateFilename
-     * @param string $issuerCertificateFilename
-     * @param bool|null $expectedRevocation
-     */
-    public function testWithLocalAsset($certificateFilename, $issuerCertificateFilename, $expectedRevocation)
-    {
-        $certificateLoader = new CertificateLoader();
-        $certificate = $certificateLoader->fromFile(OCSP_TEST_DIR . '/assets/' . $certificateFilename);
-        $issuerCertificate = $certificateLoader->fromFile(OCSP_TEST_DIR . '/assets/' . $issuerCertificateFilename);
-        $this->checkRevocation($certificate, $issuerCertificate, $expectedRevocation);
-    }
-
-    /**
-     * @return array[]
-     */
     public function remoteCertificatesProvider()
     {
         return [
             ['https://www.google.com', false],
+            ['https://digicert-tls-ecc-p384-root-g5-revoked.chain-demos.digicert.com/', true]
         ];
     }
 
@@ -102,6 +79,10 @@ class RevocationTest extends TestCase
             $this->assertSame(Ocsp::OCSP_RESPONSE_MEDIATYPE, $info['content_type']);
             $response = $ocsp->decodeOcspResponseSingle($result);
             $this->assertSame($expectedRevocation, $response->isRevoked());
+            if (!$expectedRevocation) {
+                $this->assertSame(DateTimeImmutable::class, get_class($response->getNextUpdate()));
+                $this->assertSame(true, $response->getNextUpdate() > new DateTimeImmutable());
+            }
         } finally {
             curl_close($hCurl);
         }

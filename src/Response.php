@@ -87,6 +87,13 @@ class Response
     private $thisUpdate;
 
     /**
+     * The time at which one should next check for a status change.
+     *
+     * @var \DateTimeImmutable|null
+     */
+    private $nextUpdate;
+
+    /**
      * The serial number of the certificate.
      *
      * @var string
@@ -117,11 +124,13 @@ class Response
     /**
      * @param \DateTimeImmutable $thisUpdate
      * @param string $certificateSerialNumber
+     * @param \DateTimeImmutable|null $nextUpdate
      */
-    protected function __construct(DateTimeImmutable $thisUpdate, $certificateSerialNumber)
+    protected function __construct(DateTimeImmutable $thisUpdate, $certificateSerialNumber, DateTimeImmutable $nextUpdate = null)
     {
         $this->thisUpdate = $thisUpdate;
         $this->certificateSerialNumber = $certificateSerialNumber;
+        $this->nextUpdate = $nextUpdate;
     }
 
     /**
@@ -129,12 +138,13 @@ class Response
      *
      * @param \DateTimeImmutable $thisUpdate
      * @param string $certificateSerialNumber
+     * @param \DateTimeImmutable|null $nextUpdate
      *
      * @return static
      */
-    public static function good(DateTimeImmutable $thisUpdate, $certificateSerialNumber)
+    public static function good(DateTimeImmutable $thisUpdate, $certificateSerialNumber, DateTimeImmutable $nextUpdate = null)
     {
-        $result = new static($thisUpdate, $certificateSerialNumber);
+        $result = new static($thisUpdate, $certificateSerialNumber, $nextUpdate);
         $result->revoked = false;
 
         return $result;
@@ -146,12 +156,13 @@ class Response
      * @param \DateTimeImmutable $thisUpdate
      * @param string $certificateSerialNumber
      * @param \DateTimeImmutable $revokedOn
+     * @param \DateTimeImmutable|null $nextUpdate
      *
      * @return static
      */
-    public static function revoked(DateTimeImmutable $thisUpdate, $certificateSerialNumber, DateTimeImmutable $revokedOn, $revocationReason = self::REVOCATIONREASON_UNSPECIFIED)
+    public static function revoked(DateTimeImmutable $thisUpdate, $certificateSerialNumber, DateTimeImmutable $revokedOn, $revocationReason = self::REVOCATIONREASON_UNSPECIFIED, DateTimeImmutable $nextUpdate = null)
     {
-        $result = new static($thisUpdate, $certificateSerialNumber);
+        $result = new static($thisUpdate, $certificateSerialNumber, $nextUpdate);
         $result->revoked = true;
         $result->revokedOn = $revokedOn;
         $result->revocationReason = (int) $revocationReason;
@@ -167,9 +178,9 @@ class Response
      *
      * @return static
      */
-    public static function unknown(DateTimeImmutable $thisUpdate, $certificateSerialNumber)
+    public static function unknown(DateTimeImmutable $thisUpdate, $certificateSerialNumber, DateTimeImmutable $nextUpdate = null)
     {
-        $result = new static($thisUpdate, $certificateSerialNumber);
+        $result = new static($thisUpdate, $certificateSerialNumber, $nextUpdate);
 
         return $result;
     }
@@ -222,5 +233,15 @@ class Response
     public function getRevocationReason()
     {
         return $this->revocationReason;
+    }
+
+    /**
+     * The time at which one should next check for a status change.
+     *
+     * @var \DateTimeImmutable|null
+     */
+    public function getNextUpdate()
+    {
+        return $this->nextUpdate;
     }
 }
