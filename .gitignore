@@ -3,3 +3,5 @@
 /.phpunit.result.cache
 /composer.lock
 /coverage-clover.xml
+/ocular.phar
+/php-coveralls.phar
