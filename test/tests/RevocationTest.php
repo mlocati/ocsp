@@ -2,6 +2,7 @@
 
 namespace Ocsp\Test;
 
+use DateTimeImmutable;
 use Ocsp\Asn1\Element\Sequence;
 use Ocsp\CertificateInfo;
 use Ocsp\CertificateLoader;
@@ -78,6 +79,10 @@ class RevocationTest extends TestCase
             $this->assertSame(Ocsp::OCSP_RESPONSE_MEDIATYPE, $info['content_type']);
             $response = $ocsp->decodeOcspResponseSingle($result);
             $this->assertSame($expectedRevocation, $response->isRevoked());
+            if (!$expectedRevocation) {
+                $this->assertSame(DateTimeImmutable::class, get_class($response->getNextUpdate()));
+                $this->assertSame(true, $response->getNextUpdate() > new DateTimeImmutable());
+            }
         } finally {
             curl_close($hCurl);
         }
