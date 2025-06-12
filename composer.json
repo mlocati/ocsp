@@ -13,8 +13,8 @@
     ],
     "homepage": "https://github.com/mlocati/ocsp/",
     "support": {
-	    "issues": "https://github.com/mlocati/ocsp/issues/",
-	    "source": "https://github.com/mlocati/ocsp/"
+        "issues": "https://github.com/mlocati/ocsp/issues/",
+        "source": "https://github.com/mlocati/ocsp/"
     },
     "minimum-stability": "stable",
     "prefer-stable": true,
@@ -33,15 +33,15 @@
         }
     },
     "require": {
-        "php": ">=5.5.9",
-        "phpseclib/phpseclib": "^2 || ^3"
+        "php": ">=7.1",
+        "phpseclib/phpseclib": "^2.0.47 || ^3.0.36"
     },
     "require-dev": {
         "ext-curl": "*",
-        "phpunit/phpunit": "^4.8.36 || ^5.7 || ^6.5 || ^7.4 || ^8.5.23 || ^9.5"
+        "phpunit/phpunit": "^7.4 || ^8.5.23 || ^9.5"
     },
     "scripts": {
-	    "codestyle": "php-cs-fixer fix --path-mode=intersection --config=.php-cs-fixer.dist.php .",
+        "codestyle": "php-cs-fixer fix --path-mode=intersection --config=.php-cs-fixer.dist.php .",
         "test": "phpunit"
     },
     "keywords": [
