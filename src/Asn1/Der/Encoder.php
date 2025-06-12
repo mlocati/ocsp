@@ -154,7 +154,7 @@ class Encoder implements EncoderInterface
      *
      * @return string
      */
-    protected function doEncodeElement(Element $element, Tag $implicitTag = null)
+    protected function doEncodeElement(Element $element, ?Tag $implicitTag = null)
     {
         if ($implicitTag === null) {
             $result = $this->encodeType($element->getTypeID(), $element->getClass(), $element->isConstructed());

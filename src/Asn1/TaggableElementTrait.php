@@ -29,7 +29,7 @@ trait TaggableElementTrait
      *
      * @see \Ocsp\Asn1\TaggableElement::setTag()
      */
-    public function setTag(Tag $value = null)
+    public function setTag(?Tag $value = null)
     {
         $this->tag = $value;
 
