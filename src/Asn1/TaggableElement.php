@@ -21,5 +21,5 @@ interface TaggableElement extends Element
      *
      * @return $this
      */
-    public function setTag(Tag $value = null);
+    public function setTag(?Tag $value = null);
 }

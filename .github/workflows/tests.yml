@@ -33,12 +33,11 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
+          - windows-latest
         composer-flags:
-          - ""
+          - "--prefer-lowest"
+          - "--prefer-stable"
         php-version:
-          - "5.5"
-          - "5.6"
-          - "7.0"
           - "7.1"
           - "7.2"
           - "7.3"
@@ -46,22 +45,8 @@ jobs:
           - "8.0"
           - "8.1"
           - "8.2"
-        include:
-          - os: ubuntu-latest
-            php-version: "5.5"
-            composer-flags: "--prefer-lowest"
-          - os: ubuntu-latest
-            php-version: "7.3"
-            composer-flags: "--prefer-lowest"
-          - os: ubuntu-latest
-            php-version: "8.2"
-            composer-flags: "--prefer-lowest"
-          - os: windows-latest
-            php-version: "5.5"
-          - os: windows-latest
-            php-version: "7.4"
-          - os: windows-latest
-            php-version: "8.2"
+          - "8.3"
+          - "8.4"
     runs-on: ${{ matrix.os }}
     steps:
       - name: Set code coverage
@@ -76,9 +61,6 @@ jobs:
           coverage: ${{ env.CODE_COVERAGE_TOOL }}
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Patch composer
-        if: contains(matrix.composer-flags, '--prefer-lowest') && !contains(fromJSON('["5.5"]'), matrix.php-version)
-        run: composer require --no-update --ansi --no-interaction "phpunit/phpunit:^5.7 || ^6.5 || ^7.4 || ^8.5.23 || ^9.5"
       - name: Install Composer dependencies ${{ matrix.composer-flags }}
         run: composer --ansi --no-interaction --no-progress --optimize-autoloader ${{ matrix.composer-flags }} update
       - name: Run PHPUnit (without code coverage)
