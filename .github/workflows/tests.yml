@@ -3,12 +3,15 @@ name: Tests
 on:
   push:
     branches:
-      - master
+      - main
+    tags-ignore:
+      - "**"
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
+
   php-coding-style:
     name: Check PHP coding style
     runs-on: ubuntu-latest
@@ -24,9 +27,11 @@ jobs:
       - name: Check PHP coding style
         run: |
           php-cs-fixer fix --path-mode=intersection --config=.php-cs-fixer.dist.php --dry-run --diff --using-cache=no --no-interaction --ansi .
+
   phpunit:
     name: PHPUnit
-    needs: php-coding-style
+    needs:
+      - php-coding-style
     env:
       CODE_COVERAGE_TOOL: none
     strategy:
