@@ -9,7 +9,7 @@ final class Math
     /**
      * Set the name of the class for new BigInteger instances
      *
-     * @param string|null $className can be 'phpseclib3\Math\BigInteger' or 'phpseclib\Math\BigInteger'. If an empty string (or NULL) is passed, we'll detect it automatically
+     * @param string|null $className can be 'phpseclib4\Math\BigInteger', 'phpseclib3\Math\BigInteger' or 'phpseclib\Math\BigInteger'. If an empty string (or NULL) is passed, we'll detect it automatically
      */
     public static function setBigIntegerClass($className)
     {
@@ -19,7 +19,10 @@ final class Math
     public static function getBigIntegerClass()
     {
         if (self::$bigIntegerClass === '') {
-            self::$bigIntegerClass = 'phpseclib3\Math\BigInteger';
+            self::$bigIntegerClass = 'phpseclib4\Math\BigInteger';
+            if (!class_exists(self::$bigIntegerClass)) {
+                self::$bigIntegerClass = 'phpseclib3\Math\BigInteger';
+            }
             if (!class_exists(self::$bigIntegerClass)) {
                 self::$bigIntegerClass = 'phpseclib\Math\BigInteger';
             }
@@ -28,10 +31,10 @@ final class Math
     }
 
     /**
-     * @param string|int|resource|\phpseclib3\Math\BigInteger\Engines\Engine $x
+     * @param string|int|resource|\phpseclib3\Math\BigInteger\Engines\Engine|\phpseclib4\Math\BigInteger\Engines\Engine $x
      * @param int $base
      *
-     * @return \phpseclib\Math\BigInteger|\phpseclib3\Math\BigInteger
+     * @return \phpseclib\Math\BigInteger|\phpseclib3\Math\BigInteger|\phpseclib4\Math\BigInteger
      */
     public static function createBigInteger($x, $base = 10)
     {

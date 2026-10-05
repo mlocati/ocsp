@@ -205,7 +205,7 @@ class Encoder implements EncoderInterface
     /**
      * Encode the type ID.
      *
-     * @param int|string|\phpseclib\Math\BigInteger|\phpseclib3\Math\BigInteger $typeID the type ID
+     * @param int|string|\phpseclib\Math\BigInteger|\phpseclib3\Math\BigInteger|\phpseclib4\Math\BigInteger $typeID the type ID
      * @param string $class the class (the value of one of the Element::CLASS_... constants)
      * @param bool $isConstructed is the element a constructed element?
      *
@@ -282,7 +282,7 @@ class Encoder implements EncoderInterface
     /**
      * Get the bits representing a number.
      *
-     * @param int|string|\phpseclib\Math\BigInteger|\phpseclib3\Math\BigInteger $number
+     * @param int|string|\phpseclib\Math\BigInteger|\phpseclib3\Math\BigInteger|\phpseclib4\Math\BigInteger $number
      *
      * @return string
      */
