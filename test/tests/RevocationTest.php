@@ -48,7 +48,9 @@ class RevocationTest extends TestCase
             $issuerCertificate = $certificateLoader->fromString($certInfo[1]['Cert']);
             $this->checkRevocation($certificate, $issuerCertificate, $expectedRevocation);
         } finally {
-            curl_close($hCurl);
+            if (PHP_VERSION_ID < 80000) {
+                curl_close($hCurl);
+            }
         }
     }
 
@@ -84,7 +86,9 @@ class RevocationTest extends TestCase
                 $this->assertSame(true, $response->getNextUpdate() > new DateTimeImmutable());
             }
         } finally {
-            curl_close($hCurl);
+            if (PHP_VERSION_ID < 80000) {
+                curl_close($hCurl);
+            }
         }
     }
 }
