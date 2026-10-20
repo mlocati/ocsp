@@ -19,11 +19,11 @@ jobs:
       matrix:
         php-version:
           - "7.1"
-          - "8.4"
+          - "8.5"
     steps:
       -
         name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       -
         name: Install PHP
         uses: shivammathur/setup-php@v2
@@ -49,7 +49,7 @@ jobs:
           tools: php-cs-fixer:v3
           coverage: none
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
       - name: Check PHP coding style
         run: |
           php-cs-fixer fix --path-mode=intersection --config=.php-cs-fixer.dist.php --dry-run --diff --using-cache=no --no-interaction --ansi .
@@ -59,8 +59,6 @@ jobs:
     needs:
       - check-php-syntax
       - php-coding-style
-    env:
-      CODE_COVERAGE_TOOL: none
     strategy:
       matrix:
         os:
@@ -79,44 +77,46 @@ jobs:
           - "8.2"
           - "8.3"
           - "8.4"
+          - "8.5"
+        php-coverage:
+          - none
+        phpunit-options:
+          - ""
+        exclude:
+          - os: ubuntu-latest
+            php-version: "7.4"
+        include:
+          - os: ubuntu-latest
+            composer-flags: "--prefer-lowest"
+            php-version: "7.4"
+            php-coverage: xdebug
+            phpunit-options: --coverage-clover coverage-clover.xml
+          - os: ubuntu-latest
+            composer-flags: "--prefer-stable"
+            php-version: "7.4"
+            php-coverage: xdebug
+            phpunit-options: --coverage-clover coverage-clover.xml
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Set code coverage
-        if: startsWith(matrix.os, 'ubuntu') && matrix.php-version == '7.4'
-        run: |
-          echo "CODE_COVERAGE_TOOL=xdebug" >> $GITHUB_ENV
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-version }}
           tools: composer
-          coverage: ${{ env.CODE_COVERAGE_TOOL }}
+          coverage: ${{ matrix.php-coverage }}
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
       - name: Install Composer dependencies ${{ matrix.composer-flags }}
         run: composer --ansi --no-interaction --no-progress --optimize-autoloader ${{ matrix.composer-flags }} update
-      - name: Run PHPUnit (without code coverage)
-        if: ${{ env.CODE_COVERAGE_TOOL == 'none' }}
-        run: composer --ansi --no-interaction run-script test
-      - name: Run PHPUnit (with code coverage)
-        if: ${{ env.CODE_COVERAGE_TOOL != 'none' }}
-        run: composer --ansi --no-interaction run-script test -- --coverage-clover coverage-clover.xml
+      - name: Run PHPUnit
+        run: composer --ansi --no-interaction run-script test -- ${{ matrix.phpunit-options }}
       - name: Download Coveralls
-        if: ${{ env.CODE_COVERAGE_TOOL != 'none' }}
-        run: curl -sSLf -o php-coveralls.phar https://github.com/php-coveralls/php-coveralls/releases/download/v2.5.3/php-coveralls.phar
+        if: matrix.php-coverage != 'none'
+        run: curl -sSLf -o php-coveralls.phar https://github.com/php-coveralls/php-coveralls/releases/download/v2.9.1/php-coveralls.phar
       - name: Upload Coveralls data
-        if: ${{ env.CODE_COVERAGE_TOOL != 'none' }}
+        if: matrix.php-coverage != 'none'
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >
           php php-coveralls.phar
           --coverage_clover=coverage-clover.xml --json_path=coveralls-upload.json --ansi --no-interaction -vvv
-      - name: Download Scrutinizer
-        if: ${{ env.CODE_COVERAGE_TOOL != 'none' }}
-        run: curl -sSLf -o ocular.phar https://scrutinizer-ci.com/ocular.phar
-      - name: Upload Scrutinizer data
-        if: ${{ env.CODE_COVERAGE_TOOL != 'none' }}
-        run: >
-          php ocular.phar code-coverage:upload
-          --format=php-clover --ansi --no-interaction
-          coverage-clover.xml
