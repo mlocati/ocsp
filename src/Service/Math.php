@@ -22,9 +22,9 @@ final class Math
             self::$bigIntegerClass = 'phpseclib4\Math\BigInteger';
             if (!class_exists(self::$bigIntegerClass)) {
                 self::$bigIntegerClass = 'phpseclib3\Math\BigInteger';
-            }
-            if (!class_exists(self::$bigIntegerClass)) {
-                self::$bigIntegerClass = 'phpseclib\Math\BigInteger';
+                if (!class_exists(self::$bigIntegerClass)) {
+                    self::$bigIntegerClass = 'phpseclib\Math\BigInteger';
+                }
             }
         }
         return self::$bigIntegerClass;
