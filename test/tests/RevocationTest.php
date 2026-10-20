@@ -17,8 +17,8 @@ class RevocationTest extends TestCase
     public function remoteCertificatesProvider()
     {
         return [
-            ['https://www.google.com', false],
-            ['https://digicert-tls-ecc-p384-root-g5-revoked.chain-demos.digicert.com/', true]
+            ['https://digicert-tls-ecc-p384-root-g5.chain-demos.digicert.com/', false],
+            ['https://digicert-tls-ecc-p384-root-g5-revoked.chain-demos.digicert.com/', true],
         ];
     }
 
@@ -48,7 +48,9 @@ class RevocationTest extends TestCase
             $issuerCertificate = $certificateLoader->fromString($certInfo[1]['Cert']);
             $this->checkRevocation($certificate, $issuerCertificate, $expectedRevocation);
         } finally {
-            curl_close($hCurl);
+            if (PHP_VERSION_ID < 80000) {
+                curl_close($hCurl);
+            }
         }
     }
 
@@ -62,6 +64,9 @@ class RevocationTest extends TestCase
         $certificateInfo = new CertificateInfo();
         $ocsp = new Ocsp();
         $ocspResponderUrl = $certificateInfo->extractOcspResponderUrl($certificate);
+        if ($ocspResponderUrl === '') {
+            $this->markTestSkipped('The certificate does not specify an OCSP responder URL');
+        }
         $requestInfo = $certificateInfo->extractRequestInfo($certificate, $issuerCertificate);
         $requestBody = $ocsp->buildOcspRequestBodySingle($requestInfo);
 
@@ -84,7 +89,9 @@ class RevocationTest extends TestCase
                 $this->assertSame(true, $response->getNextUpdate() > new DateTimeImmutable());
             }
         } finally {
-            curl_close($hCurl);
+            if (PHP_VERSION_ID < 80000) {
+                curl_close($hCurl);
+            }
         }
     }
 }

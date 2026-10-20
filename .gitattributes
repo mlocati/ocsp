@@ -2,3 +2,5 @@
 /README.md export-ignore
 /phpunit.xml.dist export-ignore
 /test/ export-ignore
+/test/assets/**/*.der binary
+/test/assets/ocsp/index.txt text eol=lf

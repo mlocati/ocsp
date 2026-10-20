@@ -70,7 +70,7 @@ class Decoder implements DecoderInterface
     /**
      * Decode a CONSTRUCTED ASN.1 element.
      *
-     * @param int|\phpseclib\Math\BigInteger|\phpseclib3\Math\BigInteger $typeID
+     * @param int|\phpseclib\Math\BigInteger|\phpseclib3\Math\BigInteger|\phpseclib4\Math\BigInteger $typeID
      * @param string $class
      * @param string $encodedValue
      *
@@ -148,7 +148,7 @@ class Decoder implements DecoderInterface
      *
      * @throws \Ocsp\Exception\Asn1DecodingException
      *
-     * @return array The first element is the type ID (int|\phpseclib\Math\BigInteger|\phpseclib3\Math\BigInteger), the second is the class (string), the third is true (if the type is constructed) or false (not constructed)
+     * @return array The first element is the type ID (int|\phpseclib\Math\BigInteger|\phpseclib3\Math\BigInteger|\phpseclib4\Math\BigInteger), the second is the class (string), the third is true (if the type is constructed) or false (not constructed)
      */
     protected function decodeType($bytes, &$offset)
     {
@@ -269,7 +269,7 @@ class Decoder implements DecoderInterface
      *
      * @param string $bytes
      *
-     * @return int|\phpseclib\Math\BigInteger|\phpseclib3\Math\BigInteger
+     * @return int|\phpseclib\Math\BigInteger|\phpseclib3\Math\BigInteger|\phpseclib4\Math\BigInteger
      */
     protected function decodeInteger($bytes)
     {
